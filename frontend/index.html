@@ -34,6 +34,17 @@
         width: 100%;
         overflow-x: auto;
       }
+      
+      /* Make Bokeh container stretch full width */
+      .bk-root {
+        width: 100% !important;
+      }
+      .bk-root .bk-grid-column {
+        width: 100% !important;
+      }
+      .bk-root .bk-data-table {
+        width: 100% !important;
+      }
       /* Style Bokeh tables to fit the app theme */
       .bk-data-table {
         font-family: inherit !important;
@@ -44,6 +55,45 @@
       }
       .bokeh-selected {
         background-color: #fecaca !important;
+      }
+      
+      /* Dashboard chart styles */
+      .donut {
+        max-height: 200px;
+      }
+      .donut-ring {
+        stroke: #EFEFEF;
+      }
+      .donut-segment {
+        transform-origin: center;
+        transition: all 0.3s ease-in-out;
+      }
+      .donut-segment:hover {
+        stroke-width: 4;
+      }
+      .chart-text {
+        font-family: Arial, sans-serif;
+        fill: #333;
+      }
+      .chart-number {
+        font-size: 0.5em;
+        line-height: 1;
+        font-weight: bold;
+        text-anchor: middle;
+      }
+      .chart-label {
+        font-size: 0.25em;
+        text-anchor: middle;
+        text-transform: uppercase;
+      }
+      
+      /* Bar chart styles */
+      .bar-chart {
+        transition: all 0.3s ease;
+      }
+      .bar-chart:hover {
+        filter: brightness(90%);
+        transform: scaleY(1.05);
       }
     </style>
   </head>
@@ -88,7 +138,11 @@
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar Navigation -->
       <aside id="sidebar" class="w-64 bg-white shadow-md block transition-all duration-300 ease-in-out">
-        <nav class="mt-5 px-2 py-3">
+        <!-- Logo at the top of the sidebar -->
+        <div class="px-2 py-4 flex justify-center">
+          <img src="./assets/mlechker_logo.png" alt="MLechker Logo" class="w-56 max-w-full">
+        </div>
+        <nav class="px-2 py-3">
           <div class="py-2">
             <a href="#dashboard" class="sidebar-item active block w-full mb-1" data-page="dashboard">
               <i class="fas fa-home sidebar-icon"></i>
@@ -128,9 +182,152 @@
         <!-- Content Pages (only one visible at a time) -->
         <div id="dashboard-page" class="page active">
           <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
+          
+          <!-- Top row with stats and pie chart -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Total Messages Stat -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+              <h3 class="text-lg font-medium text-gray-700 mb-4">Total Messages</h3>
+              <div class="flex items-center justify-center flex-col">
+                <div class="text-8xl font-bold text-blue-600 leading-none mb-4" id="total-messages-count">1,247</div>
+                <div class="flex items-center text-green-500 font-medium">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                  </svg>
+                  <span>12.5% increase from last month</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pie Chart -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+              <h3 class="text-lg font-medium text-gray-700 mb-2">Message Types</h3>
+              <div class="w-full h-64 flex justify-center items-center" id="pie-chart-container">
+                <!-- SVG Pie Chart (mock) - corrected segment positions -->
+                <svg width="200" height="200" viewBox="0 0 42 42" class="donut">
+                  <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
+                  <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="3"></circle>
+                  <!-- Normal messages segment (95.3%) - starts at top (0 degrees) -->
+                  <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#0074D9" stroke-width="3" stroke-dasharray="95.3 4.7" stroke-dashoffset="0"></circle>
+                  <!-- Injection segment (4.7%) - continues where normal segment ends -->
+                  <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#FF4136" stroke-width="3" stroke-dasharray="4.7 95.3" stroke-dashoffset="-95.3"></circle>
+                  <g class="chart-text">
+                    <text x="50%" y="50%" class="chart-number" text-anchor="middle" alignment-baseline="middle">
+                      95.3%
+                    </text>
+                    <text x="50%" y="50%" class="chart-label" text-anchor="middle" alignment-baseline="middle" dy="1.2em">
+                      normal
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              <div class="flex justify-center mt-4">
+                <div class="flex items-center mr-6">
+                  <div class="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
+                  <span class="text-sm">Normal (95.3%)</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                  <span class="text-sm">Injections (4.7%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bottom row with weekly chart -->
           <div class="bg-white p-6 rounded-lg shadow-md">
-            <p class="text-gray-700">Welcome to Echker Dashboard</p>
-            <p id="serverStatus" class="text-gray-500 mt-4">Checking server status...</p>
+            <h3 class="text-lg font-medium text-gray-700 mb-4">Messages Last Week</h3>
+            <!-- Simplified bar chart with explicit heights -->
+            <div class="w-full p-4">
+              <!-- Y-axis and chart grid -->
+              <div class="flex" style="height: 400px">
+                <!-- Y-axis labels -->
+                <div class="flex flex-col justify-between pr-2 text-right">
+                  <span class="text-xs text-gray-600">80</span>
+                  <span class="text-xs text-gray-600">60</span>
+                  <span class="text-xs text-gray-600">40</span>
+                  <span class="text-xs text-gray-600">20</span>
+                  <span class="text-xs text-gray-600">0</span>
+                </div>
+                
+                <!-- Chart area with grid lines -->
+                <div class="flex-1 relative">
+                  <!-- Grid lines -->
+                  <div class="absolute inset-0">
+                    <div class="absolute top-0 w-full border-t border-gray-200"></div>
+                    <div class="absolute top-1/4 w-full border-t border-gray-200"></div>
+                    <div class="absolute top-2/4 w-full border-t border-gray-200"></div>
+                    <div class="absolute top-3/4 w-full border-t border-gray-200"></div>
+                    <div class="absolute bottom-0 w-full border-t border-gray-400"></div>
+                  </div>
+                  
+                  <!-- Bars container -->
+                  <div class="flex justify-between h-full items-end">
+                    <!-- Monday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 240px;" data-value="48"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 20px;" data-value="4"></div>
+                      <p class="text-xs mt-2 font-medium">Mon</p>
+                    </div>
+                    
+                    <!-- Tuesday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 180px;" data-value="36"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 30px;" data-value="6"></div>
+                      <p class="text-xs mt-2 font-medium">Tue</p>
+                    </div>
+                    
+                    <!-- Wednesday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 300px;" data-value="60"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 40px;" data-value="8"></div>
+                      <p class="text-xs mt-2 font-medium">Wed</p>
+                    </div>
+                    
+                    <!-- Thursday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 200px;" data-value="40"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 10px;" data-value="2"></div>
+                      <p class="text-xs mt-2 font-medium">Thu</p>
+                    </div>
+                    
+                    <!-- Friday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 260px;" data-value="52"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 25px;" data-value="5"></div>
+                      <p class="text-xs mt-2 font-medium">Fri</p>
+                    </div>
+                    
+                    <!-- Saturday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 120px;" data-value="24"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 5px;" data-value="1"></div>
+                      <p class="text-xs mt-2 font-medium">Sat</p>
+                    </div>
+                    
+                    <!-- Sunday -->
+                    <div class="flex flex-col items-center mx-2" style="width: 40px;">
+                      <div class="w-full bg-blue-500 rounded-t" style="height: 100px;" data-value="20"></div>
+                      <div class="w-full bg-red-500 rounded-b mt-0.5" style="height: 5px;" data-value="1"></div>
+                      <p class="text-xs mt-2 font-medium">Sun</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex justify-center mt-4">
+              <div class="flex items-center mr-6">
+                <div class="w-4 h-4 bg-blue-500 mr-2"></div>
+                <span class="text-sm">Normal Messages</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-4 h-4 bg-red-500 mr-2"></div>
+                <span class="text-sm">Potential Injections</span>
+              </div>
+            </div>
+            
+            <p id="serverStatus" class="text-gray-500 mt-6 text-sm">Server Status: Online</p>
           </div>
         </div>
 
@@ -244,8 +441,8 @@
           <h2 class="text-2xl font-semibold mb-4">Anomaly Detection</h2>
           
           <!-- Visualization Container -->
-          <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div class="flex justify-between items-center mb-4">
+          <div class="bg-white p-6 rounded-lg shadow-md mb-6 w-full">
+            <div class="flex justify-between items-center mb-4 w-full">
               <h3 class="text-lg font-medium">Message Embeddings Visualization</h3>
               <button id="refresh-embeddings" class="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
                 <i class="fas fa-sync-alt mr-1"></i> Refresh
@@ -275,9 +472,9 @@
             </div>
             
             <!-- Bokeh container -->
-            <div id="bokeh-container" class="hidden overflow-x-auto">
+            <div id="bokeh-container" class="hidden w-full">
               <!-- Plot and table will be rendered here -->
-              <div id="embedding-plot" class="mt-2"></div>
+              <div id="embedding-plot" class="mt-2 w-full"></div>
             </div>
           </div>
         </div>
@@ -440,6 +637,11 @@ else:
         const bokehContainer = document.getElementById('bokeh-container');
         const refreshEmbeddingsBtn = document.getElementById('refresh-embeddings');
         
+        // Cache for embedding visualization data
+        let embeddingDataCache = null;
+        let embeddingLastFetched = null;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+        
         // Function to show selected page and highlight correct sidebar item
         function navigateToPage(pageId) {
           console.log("Navigating to page:", pageId);
@@ -466,6 +668,8 @@ else:
           if (sidebarCollapsed) {
             sidebar.classList.remove('w-64');
             sidebar.classList.add('w-16');
+            // Hide logo when collapsed
+            sidebar.querySelector('img[alt="MLechker Logo"]').classList.add('hidden');
             sidebar.querySelectorAll('.sidebar-item span').forEach(span => {
               span.classList.add('hidden');
             });
@@ -473,6 +677,8 @@ else:
           } else {
             sidebar.classList.add('w-64');
             sidebar.classList.remove('w-16');
+            // Show logo when expanded
+            sidebar.querySelector('img[alt="MLechker Logo"]').classList.remove('hidden');
             sidebar.querySelectorAll('.sidebar-item span').forEach(span => {
               span.classList.remove('hidden');
             });
@@ -1072,14 +1278,27 @@ else:
         // Initial responsive setup
         handleResponsiveLayout();
         
-        // Embedding visualization functionality - properly implemented
-        function loadEmbeddingVisualization() {
+        // Embedding visualization functionality - with caching
+        function loadEmbeddingVisualization(forceRefresh = false) {
           const token = localStorage.getItem('token');
           if (!token) {
             embeddingsLoading.classList.add('hidden');
             embeddingsEmpty.classList.remove('hidden');
             embeddingsError.classList.add('hidden');
             bokehContainer.classList.add('hidden');
+            return;
+          }
+          
+          // Check if we have cached data and it's still valid
+          const now = new Date().getTime();
+          if (!forceRefresh && 
+              embeddingDataCache && 
+              embeddingLastFetched && 
+              (now - embeddingLastFetched < CACHE_DURATION)) {
+            console.log("Using cached embedding visualization data");
+            
+            // Use the cached data
+            displayEmbeddingData(embeddingDataCache);
             return;
           }
           
@@ -1105,36 +1324,12 @@ else:
           .then(data => {
             console.log("Received Bokeh JSON data:", data);
             
-            // Hide loading state
-            embeddingsLoading.classList.add('hidden');
+            // Update cache with new data
+            embeddingDataCache = data;
+            embeddingLastFetched = now;
             
-            // Check for error response
-            if (data.status === "error") {
-              embeddingsError.classList.remove('hidden');
-              embeddingsErrorMessage.textContent = data.message || "Error loading visualization";
-              return;
-            }
-            
-            // Check for empty response
-            if (data.status === "empty") {
-              embeddingsEmpty.classList.remove('hidden');
-              return;
-            }
-            
-            // Clear previous visualization
-            document.getElementById('embedding-plot').innerHTML = '';
-            
-            try {
-              // Properly embed Bokeh using json_item as per documentation
-              Bokeh.embed.embed_item(data, "embedding-plot");
-              
-              // Show container
-              bokehContainer.classList.remove('hidden');
-            } catch (error) {
-              console.error("Error rendering Bokeh visualization:", error);
-              embeddingsError.classList.remove('hidden');
-              embeddingsErrorMessage.textContent = `Error rendering visualization: ${error.message}`;
-            }
+            // Display the data
+            displayEmbeddingData(data);
           })
           .catch(error => {
             console.error("Error loading embedding data:", error);
@@ -1144,17 +1339,134 @@ else:
           });
         }
         
+        // Helper function to display embedding data
+        function displayEmbeddingData(data) {
+          // Hide loading state
+          embeddingsLoading.classList.add('hidden');
+          
+          // Check for error response
+          if (data.status === "error") {
+            embeddingsError.classList.remove('hidden');
+            embeddingsErrorMessage.textContent = data.message || "Error loading visualization";
+            return;
+          }
+          
+          // Check for empty response
+          if (data.status === "empty") {
+            embeddingsEmpty.classList.remove('hidden');
+            return;
+          }
+          
+          // Clear previous visualization
+          document.getElementById('embedding-plot').innerHTML = '';
+          
+          try {
+            // Properly embed Bokeh using json_item as per documentation
+            Bokeh.embed.embed_item(data, "embedding-plot");
+            
+            // Show container
+            bokehContainer.classList.remove('hidden');
+          } catch (error) {
+            console.error("Error rendering Bokeh visualization:", error);
+            embeddingsError.classList.remove('hidden');
+            embeddingsErrorMessage.textContent = `Error rendering visualization: ${error.message}`;
+          }
+        }
+        
         // Set up event listeners for embedding visualization
         if (refreshEmbeddingsBtn) {
-          refreshEmbeddingsBtn.addEventListener('click', loadEmbeddingVisualization);
+          refreshEmbeddingsBtn.addEventListener('click', () => loadEmbeddingVisualization(true));
         }
         
         if (embeddingsTryAgain) {
-          embeddingsTryAgain.addEventListener('click', loadEmbeddingVisualization);
+          embeddingsTryAgain.addEventListener('click', () => loadEmbeddingVisualization(true));
         }
 
         // Listen for window resize events
         window.addEventListener('resize', handleResponsiveLayout);
+        
+        // Initialize dashboard with mock data
+        function initDashboard() {
+          // Mock data
+          const mockData = {
+            totalMessages: 1247,
+            normalMessages: 1189,
+            injectionMessages: 58,
+            weeklyData: [
+              { day: 'Mon', normal: 48, injection: 4 },
+              { day: 'Tue', normal: 36, injection: 6 },
+              { day: 'Wed', normal: 60, injection: 8 },
+              { day: 'Thu', normal: 40, injection: 2 },
+              { day: 'Fri', normal: 52, injection: 5 },
+              { day: 'Sat', normal: 24, injection: 1 },
+              { day: 'Sun', normal: 20, injection: 1 }
+            ]
+          };
+          
+          // Calculate percentages
+          const totalPercent = mockData.normalMessages / mockData.totalMessages * 100;
+          const injectionPercent = mockData.injectionMessages / mockData.totalMessages * 100;
+          
+          // Update total messages count
+          document.getElementById('total-messages-count').textContent = mockData.totalMessages.toLocaleString();
+          
+          // Update donut chart
+          const donutSegments = document.querySelectorAll('.donut-segment');
+          donutSegments[0].setAttribute('stroke-dasharray', `${totalPercent} ${100-totalPercent}`);
+          donutSegments[1].setAttribute('stroke-dasharray', `${injectionPercent} ${100-injectionPercent}`);
+          
+          // Update chart text
+          const chartNumber = document.querySelector('.chart-number');
+          chartNumber.textContent = `${totalPercent.toFixed(1)}%`;
+          
+          // Update legend text
+          const legendTexts = document.querySelectorAll('#pie-chart-container + div span');
+          legendTexts[0].textContent = `Normal (${totalPercent.toFixed(1)}%)`;
+          legendTexts[1].textContent = `Injections (${injectionPercent.toFixed(1)}%)`;
+          
+          // Bar chart could be updated similarly if needed
+          // Already set static values in the HTML
+        }
+        
+        // Initialize dashboard on page load
+        initDashboard();
+        
+        // Add hover effects to bar chart bars with tooltips
+        const barCharts = document.querySelectorAll('.bar-chart');
+        barCharts.forEach(bar => {
+          bar.addEventListener('mouseover', function() {
+            // Get actual value from data attribute
+            const value = this.getAttribute('data-value');
+            const isRed = this.classList.contains('bg-red-500');
+            const type = isRed ? 'potential injections' : 'normal messages';
+            
+            // Create tooltip div if it doesn't exist
+            let tooltip = document.getElementById('bar-tooltip');
+            if (!tooltip) {
+              tooltip = document.createElement('div');
+              tooltip.id = 'bar-tooltip';
+              tooltip.className = 'absolute bg-gray-800 text-white py-1 px-2 rounded text-xs z-50 pointer-events-none';
+              document.body.appendChild(tooltip);
+            }
+            
+            // Set tooltip content and position
+            tooltip.textContent = `${value} ${type}`;
+            tooltip.style.display = 'block';
+            
+            // Position tooltip near the bar
+            const rect = this.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+            tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
+          });
+          
+          bar.addEventListener('mouseout', function() {
+            // Hide tooltip on mouseout
+            const tooltip = document.getElementById('bar-tooltip');
+            if (tooltip) {
+              tooltip.style.display = 'none';
+            }
+          });
+        });
         
         // Check server status
         fetch(`${apiBaseUrl}/api/health`)
@@ -1166,12 +1478,12 @@ else:
           })
           .then(data => {
             document.getElementById('serverStatus').textContent = 
-              `Backend status: ${data.status}`;
+              `Server Status: ${data.status || 'Online'}`;
           })
           .catch(error => {
             console.error('Error checking server status:', error);
             document.getElementById('serverStatus').textContent = 
-              `Backend error: ${error.message}`;
+              `Server Status: Error - ${error.message}`;
           });
       });
     </script>

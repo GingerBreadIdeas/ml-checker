@@ -160,13 +160,14 @@ def get_message_embeddings_json(
         'size': [10 if inj else 8 for inj in is_prompt_injection],
     })
     
-    # Create plot with selection tools
+    # Create plot with selection tools and sizing_mode for responsive behavior
     p = figure(
         title="Message Embeddings Visualization",
         tools="pan,wheel_zoom,box_zoom,reset,save,lasso_select,box_select",
         width=800, 
         height=500,
         active_scroll="wheel_zoom",
+        sizing_mode="stretch_width",  # Make plot stretch to container width
     )
     
     # Add hover tool with detailed tooltips
@@ -212,11 +213,12 @@ def get_message_embeddings_json(
         index_position=None,
         selectable=True,
         sortable=True,
+        sizing_mode="stretch_width",  # Make table stretch to container width
     )
     
-    # Create layout with both plot and table
+    # Create layout with both plot and table - make it responsive
     from bokeh.layouts import column
-    layout = column(p, data_table)
+    layout = column(p, data_table, sizing_mode="stretch_width")
     
     # Convert the combined layout to a JSON item
     item_json = json_item(layout, "embedding-plot")
