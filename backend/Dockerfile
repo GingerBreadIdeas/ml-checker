@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install uv
 
 # Install NumPy first to avoid compatibility issues
-RUN pip install numpy==1.24.4
+RUN pip install numpy==1.24.0
 
 # Pre-install PyTorch to save build time (CPU-only version)
 RUN pip install torch==2.1.0 --extra-index-url https://download.pytorch.org/whl/cpu --no-cache-dir

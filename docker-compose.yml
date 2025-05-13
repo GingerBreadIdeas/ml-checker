@@ -32,11 +32,18 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
+      - /app/node_modules  # Don't override node_modules with host directory
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

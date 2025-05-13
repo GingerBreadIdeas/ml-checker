@@ -36,8 +36,17 @@ services:
     build: ./frontend
     volumes:
       - ./frontend:/app
+      - /app/node_modules  # Don't override node_modules with host directory
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - CHOKIDAR_USEPOLLING=true  # Enable polling for file changes in Docker
+      - WDS_SOCKET_HOST=localhost  # WebSocket connection for hot reload
+      - WATCHPACK_POLLING=true     # Enable polling for file changes
+      - FAST_REFRESH=true          # Enable fast refresh for React
+    entrypoint: ["/app/entrypoint.sh"]
+    command: npm run dev -- --host 0.0.0.0
     depends_on:
       - backend
 
