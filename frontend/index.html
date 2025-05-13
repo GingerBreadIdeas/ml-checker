@@ -198,71 +198,8 @@
         </div>
 
         <div id="settings-page" class="page hidden">
-          <h2 class="text-2xl font-semibold mb-4">Settings</h2>
-          
-          <!-- Preferences Section -->
-          <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 class="font-medium text-lg mb-4">Preferences</h3>
-            <div class="space-y-2">
-              <div class="flex items-center">
-                <input type="checkbox" id="notifications" class="mr-2">
-                <label for="notifications">Enable notifications</label>
-              </div>
-              <div class="flex items-center">
-                <input type="checkbox" id="darkmode" class="mr-2">
-                <label for="darkmode">Dark mode</label>
-              </div>
-            </div>
-          </div>
-          
-          <!-- API Access Section -->
-          <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="font-medium text-lg mb-4">API Access</h3>
-            <p class="text-gray-700 mb-4">Generate an API token to access the Echker API programmatically. This token will expire after 30 days.</p>
-            
-            <div id="api-token-section">
-              <button id="generate-token-btn" class="auth-btn bg-blue-600 hover:bg-blue-700 mb-4">Generate New API Token</button>
-              
-              <div id="token-display" class="hidden">
-                <div class="bg-gray-100 p-4 rounded-lg mb-4">
-                  <h4 class="font-medium mb-2">Your API Token</h4>
-                  <p class="text-xs text-gray-500 mb-2">Keep this token secure and don't share it with others.</p>
-                  <div class="relative">
-                    <input id="api-token-value" type="text" readonly class="auth-input pr-20 font-mono text-xs" value="">
-                    <button id="copy-token-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-2 py-1 rounded text-xs">Copy</button>
-                  </div>
-                </div>
-                
-                <div class="bg-gray-100 p-4 rounded-lg mb-4">
-                  <h4 class="font-medium mb-2">Python Example</h4>
-                  <pre class="bg-gray-800 text-gray-200 p-3 rounded-lg text-xs overflow-x-auto">
-import requests
-
-# API configuration
-API_TOKEN = "your_token_here"
-API_URL = "http://backend:8000/api/v1"
-
-# Set up authorization header
-headers = {
-    "Authorization": f"Bearer {API_TOKEN}"
-}
-
-# Get your username
-response = requests.get(
-    f"{API_URL}/api/whoami", 
-    headers=headers
-)
-
-if response.status_code == 200:
-    data = response.json()
-    print(f"Authenticated as: {data['username']}")
-else:
-    print(f"Error: {response.status_code} - {response.text}")
-                  </pre>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Placeholder div for React settings component -->
+          <div id="settings-react-root"></div>
         </div>
 
         <!-- Login Page -->
@@ -329,6 +266,7 @@ else:
     <script type="module" src="/src/dashboard.tsx"></script>
     <script type="module" src="/src/tracking.tsx"></script>
     <script type="module" src="/src/anomaly.tsx"></script>
+    <script type="module" src="/src/settings.tsx"></script>
     
     <!-- JavaScript for navigation and authentication -->
     <script>
@@ -518,63 +456,6 @@ else:
         
         // Message tracking functionality is now handled by the React component
         
-        // API Token generation functionality
-        const generateTokenBtn = document.getElementById('generate-token-btn');
-        const tokenDisplay = document.getElementById('token-display');
-        const apiTokenValue = document.getElementById('api-token-value');
-        const copyTokenBtn = document.getElementById('copy-token-btn');
-        
-        if (generateTokenBtn) {
-          generateTokenBtn.addEventListener('click', function() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-              alert('You must be logged in to generate an API token');
-              navigateToPage('login');
-              return;
-            }
-            
-            fetch(`${apiBaseUrl}/api/v1/auth/generate-api-token`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            })
-            .then(response => {
-              if (response.ok) {
-                return response.json();
-              } else {
-                throw new Error('Failed to generate token');
-              }
-            })
-            .then(data => {
-              // Display the token
-              apiTokenValue.value = data.access_token;
-              tokenDisplay.classList.remove('hidden');
-              
-              // Update the example code with the token
-              const exampleCode = document.querySelector('#token-display pre');
-              if (exampleCode) {
-                const updatedCode = exampleCode.textContent.replace(
-                  'API_TOKEN = "your_token_here"',
-                  `API_TOKEN = "${data.access_token}"`
-                );
-                exampleCode.textContent = updatedCode;
-              }
-            })
-            .catch(error => {
-              console.error('Error generating token:', error);
-              alert('Error generating token. Please try again.');
-            });
-          });
-        }
-        
-        if (copyTokenBtn) {
-          copyTokenBtn.addEventListener('click', function() {
-            apiTokenValue.select();
-            document.execCommand('copy');
-            alert('Token copied to clipboard');
-          });
-        }
         
         // Add click event listener to sidebar toggle
         sidebarToggle.addEventListener('click', toggleSidebar);
@@ -774,6 +655,12 @@ else:
           window.initAnomaly('anomaly-react-root');
         }
         
+        // Initialize settings if it's active on page load
+        if (typeof window.initSettings === 'function' && 
+            document.getElementById('settings-page').classList.contains('active')) {
+          window.initSettings('settings-react-root');
+        }
+        
         // Initialize when clicking any dashboard navigation link
         const dashboardNavLinks = document.querySelectorAll('[data-page="dashboard"]');
         dashboardNavLinks.forEach(link => {
@@ -808,6 +695,19 @@ else:
             setTimeout(() => {
               if (typeof window.initAnomaly === 'function') {
                 window.initAnomaly('anomaly-react-root');
+              }
+            }, 50);
+          });
+        });
+        
+        // Initialize when clicking any settings navigation link
+        const settingsNavLinks = document.querySelectorAll('[data-page="settings"]');
+        settingsNavLinks.forEach(link => {
+          link.addEventListener('click', function() {
+            // Small timeout to allow the page to become visible first
+            setTimeout(() => {
+              if (typeof window.initSettings === 'function') {
+                window.initSettings('settings-react-root');
               }
             }, 50);
           });
