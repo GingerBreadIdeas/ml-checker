@@ -23,15 +23,13 @@ export default defineConfig({
       }
     }
   },
-  // Define multiple entry points
+  // Define single entry point for SPA
   build: {
     sourcemap: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        dashboard: resolve(__dirname, 'src/dashboard.tsx'),
-        tracking: resolve(__dirname, 'src/tracking.tsx'),
       },
       output: {
         entryFileNames: `assets/[name].[hash].js`,
