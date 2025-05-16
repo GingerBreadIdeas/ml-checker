@@ -1,0 +1,12 @@
+run:
+  generations: 1
+
+plugins:
+  extended_detectors: false
+  probe_spec: promptinject
+  probes:
+    promptinject:
+      max_prompts: 1
+
+
+
