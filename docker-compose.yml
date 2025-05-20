@@ -36,7 +36,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-      - echker_kafka-net  # Updated to use the existing network name
 
   frontend:
     build:
@@ -60,5 +59,3 @@ volumes:
 networks:
   app-network:
     driver: bridge
-  echker_kafka-net:
-    external: true  # Use the existing Kafka network

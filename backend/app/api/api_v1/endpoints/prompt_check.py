@@ -10,8 +10,10 @@ from ...deps import get_current_user
 from ....db.models.prompt import Prompt
 from ....db.models.user import User
 from ....kafka_producer import get_kafka_producer
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, Field, validator
 from typing import Dict, Any, Optional as PydanticOptional
@@ -85,15 +87,24 @@ def prompt_check(
     db.commit()
     db.refresh(prompt)
 
-    # Send to Kafka
-    producer = get_kafka_producer()
-    message = {
-        "id": prompt.id,
-        "prompt_check_data": data
-    }
-    import json
-    producer.produce("prompt_check", value=json.dumps(message).encode('utf-8'))
-    producer.poll(0)  # Process delivery reports
+    # Send to Kafka if available
+    try:
+        producer = get_kafka_producer()
+        if producer is None:
+            logger.warning("Kafka is not available. Prompt check will not be processed.")
+            return prompt
+            
+        message = {
+            "id": prompt.id,
+            "prompt_check_data": data
+        }
+        import json
+        producer.produce("prompt_check", value=json.dumps(message).encode('utf-8'))
+        producer.poll(0)  # Process delivery reports
+        logger.info(f"Successfully sent prompt {prompt.id} to Kafka for checking")
+    except Exception as e:
+        logger.exception(f"Failed to send prompt to Kafka: {e}")
+        # Continue execution - the API should still work even if Kafka fails
 
     return prompt
 

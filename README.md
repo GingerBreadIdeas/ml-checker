@@ -4,19 +4,32 @@ A FastAPI/React application with Kafka-based prompt checking.
 
 ## Quick Start
 
+### Option 1: Full Stack with Kafka (for prompt checks)
+
 ```bash
-# Start Kafka and prompt-save service
+# Start Kafka and prompt-save service first
 docker compose -f docker-compose.kafka.yml up -d
 
-# Start application
+# Then start the main application 
 docker compose up -d
 
 # Run prompt checking service
 cd runner
-KAFKA_HOST=localhost KAFKA_PORT=9092 python main.py
+python main.py
 ```
 
-The prompt-save service is now containerized and will start automatically with the Kafka services.
+The prompt-save service is now containerized and will start automatically with the Kafka services. The order of startup is important - Kafka services must be started first.
+
+### Option 2: Basic Stack without Kafka
+
+If you don't need the prompt checking functionality, you can run just the core application:
+
+```bash
+# Start just the core application (without Kafka)
+docker compose up -d
+```
+
+The application will start with Kafka functionality disabled, but all other features will work normally.
 
 ## Environment Variables
 
