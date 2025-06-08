@@ -117,6 +117,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="py-2 border-t border-gray-200">
               <Link 
+                to="/prompt"
+                className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-800 rounded-lg transition-colors duration-150 ${isActive('/prompt') ? 'bg-blue-100 text-blue-800' : ''}`}
+              >
+                <i className="fas fa-tachometer mr-3 text-lg"></i>
+                <span className={sidebarCollapsed ? 'hidden' : ''}>Prompt Testing</span>
+              </Link>
+            </div>
+            <div className="py-2 border-t border-gray-200">
+              <Link 
                 to="/settings" 
                 className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-800 rounded-lg transition-colors duration-150 ${isActive('/settings') ? 'bg-blue-100 text-blue-800' : ''}`}
               >

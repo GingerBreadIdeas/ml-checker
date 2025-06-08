@@ -15,6 +15,8 @@ from bokeh.models import ColumnDataSource, DataTable, TableColumn, HoverTool, Ci
 from bokeh.embed import file_html
 from bokeh.resources import CDN
 
+import logging
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class MessageEmbeddingData(BaseModel):
@@ -48,8 +50,6 @@ def get_message_embeddings_data(
     
     # Create embeddings and reduce to 2D
     try:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.info(f"Creating embeddings for {len(texts)} texts")
         
         # For debugging, limit the number of texts if there are many

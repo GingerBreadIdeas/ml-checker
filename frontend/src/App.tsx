@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Prompt from './components/Prompt/Prompt';
 import Layout from './components/Layout/Layout';
 import Dashboard from './components/Dashboard/Dashboard';
 import Tracking from './components/Tracking/Tracking';
@@ -132,6 +133,13 @@ function App() {
             <Layout>
               <ProtectedRoute>
                 <Anomaly />
+              </ProtectedRoute>
+            </Layout>
+          } />
+          <Route path="/prompt" element={
+            <Layout>
+              <ProtectedRoute>
+                <Prompt />
               </ProtectedRoute>
             </Layout>
           } />
