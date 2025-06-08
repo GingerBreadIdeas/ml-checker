@@ -255,7 +255,17 @@ const Prompt: React.FC = () => {
         
         {activeTab === 'tests' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Tests</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Tests</h2>
+              <button
+                onClick={fetchPromptTests}
+                disabled={isLoading}
+                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 text-sm"
+              >
+                <i className="fas fa-sync-alt mr-1"></i>
+                {isLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
             
             {isLoading ? (
               <div className="flex justify-center py-8">
