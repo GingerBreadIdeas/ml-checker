@@ -42,7 +42,14 @@ The application will start with Kafka functionality disabled, but all other feat
 - `DB_PASSWORD`: PostgreSQL password (default: postgres)
 - `DB_NAME`: PostgreSQL database (default: echker)
 
-## Development
+## Developement new
+
+- Run kafka compose
+- ssh -R 9092 to strong machine
+- Run the runner main.py in separate stron maching
+- run backend
+
+## Development old
 
 ### Frontend
 ```bash

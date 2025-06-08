@@ -42,6 +42,11 @@ class PromptCheckMessageIn(BaseModel):
         example="ollama",
         description="Model supplier (default: ollama)"
     )
+    probe: str = Field(
+        "promptinject.HijackHateHumansMini",
+        example="promptinject.HijackHateHumansMini",
+        description="Garaks probe to check"
+    )
 
 class PromptCheckOut(BaseModel):
     id: int
@@ -75,7 +80,8 @@ def prompt_check(
     data = {
         "model_supplier": message_in.model_supplier,
         "model_id": message_in.model_id,
-        "prompt": message_in.prompt_text
+        "prompt": message_in.prompt_text,
+        "probe": message_in.probe
     }
     
     # Create the database record
