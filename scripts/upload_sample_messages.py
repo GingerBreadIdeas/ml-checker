@@ -108,8 +108,8 @@ def main():
         return
     
     # Sample the required number of messages
-    normal_sample = random.sample(normal_messages, min(60, len(normal_messages)))
-    injection_sample = random.sample(injection_messages, min(20, len(injection_messages)))
+    normal_sample = random.sample(normal_messages, min(120, len(normal_messages)))
+    injection_sample = random.sample(injection_messages, min(40, len(injection_messages)))
     
     print(f"Will upload 60 normal messages and 20 prompt injection messages")
     
