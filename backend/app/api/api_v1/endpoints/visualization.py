@@ -1,3 +1,5 @@
+import os
+import json
 from typing import Any, List, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -22,6 +24,8 @@ router = APIRouter()
 class MessageEmbeddingData(BaseModel):
     points: List[List[float]]
     messages: List[Dict[str, Any]]
+
+datadict = {}
     
 @router.get("/message_embeddings_data")
 def get_message_embeddings_data(
@@ -106,6 +110,8 @@ def get_message_embeddings_json(
     """
     from bokeh.embed import json_item
     import json
+    if 'data' in datadict:
+        return datadict['data']
     
     # Fetch messages for the current user
     messages = (
@@ -221,8 +227,17 @@ def get_message_embeddings_json(
     layout = column(p, data_table, sizing_mode="stretch_width")
     
     # Convert the combined layout to a JSON item
+    print("AAAAAAAAAAA")
+    # if not os.path.isfile("tmp_data.json"):
+    #     print("creating file")
+    #     item_json = json_item(layout, "embedding-plot")
+    #     with open("tmp_data.json", 'w') as f:
+    #         f.write(json.dumps(item_json))
+    # else:
+    #     with open("tmp_data.json", 'r') as f:
+    #         item_json=json.load(f)
     item_json = json_item(layout, "embedding-plot")
-    
+    datadict['data'] = item_json
     return item_json
 
 # Keep the HTML version for direct access if needed
