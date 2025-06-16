@@ -1,4 +1,4 @@
-# Docker Compose configuration for Mlechker application
+# Docker Compose configuration for ML-Checker application
 
 services:
   postgres:
@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=echker
+      - POSTGRES_DB=ml-checker
     ports:
       - "5432:5432"
     volumes:
@@ -27,7 +27,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres/echker
+      - DATABASE_URL=postgresql://postgres:postgres@postgres/ml-checker
       - SECRET_KEY=production_secret_key_change_this
       - KAFKA_HOST=kafka
       - KAFKA_PORT=29092

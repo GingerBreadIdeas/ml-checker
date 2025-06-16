@@ -35,6 +35,7 @@ const Prompt: React.FC = () => {
   const [expandedPrompts, setExpandedPrompts] = useState<Set<number>>(new Set());
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Fetch prompt tests
   const fetchPromptTests = async () => {
@@ -215,6 +216,43 @@ const Prompt: React.FC = () => {
       model_supplier: 'ollama',
       probe: 'promptinject.HijackHateHumansMini'
     });
+  };
+
+  // Delete prompt test function
+  const deletePromptTest = async (testId: number) => {
+    if (!confirm('Are you sure you want to delete this test? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingId(testId);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt_check/${testId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setSuccessMessage('Test deleted successfully!');
+        setErrorMessage(null);
+        // Remove the test from the local state
+        setPromptTests(prev => prev.filter(test => test.id !== testId));
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to delete test');
+      }
+    } catch (error) {
+      console.error('Error deleting test:', error);
+      setErrorMessage('Error deleting test. Please try again.');
+      setSuccessMessage(null);
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -427,9 +465,29 @@ const Prompt: React.FC = () => {
                           </div>
                         </div>
                         
-                        {/* Expand/collapse icon */}
-                        <div className="text-gray-400">
-                          <i className={`fas fa-chevron-${expandedItems.has(test.id) ? 'up' : 'down'}`}></i>
+                        {/* Action buttons */}
+                        <div className="flex items-center space-x-2">
+                          {/* Delete button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deletePromptTest(test.id);
+                            }}
+                            disabled={deletingId === test.id}
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete test"
+                          >
+                            {deletingId === test.id ? (
+                              <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                              <i className="fas fa-trash"></i>
+                            )}
+                          </button>
+                          
+                          {/* Expand/collapse icon */}
+                          <div className="text-gray-400">
+                            <i className={`fas fa-chevron-${expandedItems.has(test.id) ? 'up' : 'down'}`}></i>
+                          </div>
                         </div>
                       </div>
                       

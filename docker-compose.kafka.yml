@@ -43,7 +43,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: echker-kafka
+      KAFKA_CLUSTERS_0_NAME: ml-checker-kafka
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     networks:
@@ -64,7 +64,7 @@ services:
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: echker
+      DB_NAME: ml-checker
     # No volumes needed
     networks:
       - app-network

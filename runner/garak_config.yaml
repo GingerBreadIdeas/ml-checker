@@ -13,4 +13,4 @@ plugins:
 
 reporting:
     report_prefix: run_output
-    report_dir: /home/mwm/repositories/GBI/echker/runner
+    report_dir: /home/mwm/repositories/GBI/ml-checker/runner

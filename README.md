@@ -1,4 +1,4 @@
-# Echker
+# ML-Checker
 
 A FastAPI/React application with Kafka-based prompt checking.
 
@@ -40,7 +40,7 @@ The application will start with Kafka functionality disabled, but all other feat
 - `DB_PORT`: PostgreSQL port (default: 5432)
 - `DB_USER`: PostgreSQL user (default: postgres)
 - `DB_PASSWORD`: PostgreSQL password (default: postgres)
-- `DB_NAME`: PostgreSQL database (default: echker)
+- `DB_NAME`: PostgreSQL database (default: ml-checker)
 
 ## Developement new
 

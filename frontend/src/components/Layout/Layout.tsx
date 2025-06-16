@@ -42,7 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <button onClick={toggleSidebar} className="p-1 mr-3 text-gray-500 hover:text-gray-700 focus:outline-none">
               <i className="fas fa-bars text-xl"></i>
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">Mlechker</h1>
+            <h1 className="text-2xl font-roboto-medium font-roboto-medium text-gray-900">ML-Checker</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/settings" className="p-1 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -82,8 +82,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Logo at the top of the sidebar */}
           <div className="px-2 py-4 flex justify-center">
             <img 
-              src="/assets/mlechker_logo.png" 
-              alt="MLechker Logo" 
+              src="/assets/ml-checker_logo.png" 
+              alt="ML-Checker Logo" 
               className={`max-w-full ${sidebarCollapsed ? 'hidden' : 'w-56'}`} 
             />
           </div>

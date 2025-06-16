@@ -63,4 +63,4 @@ def work(data):
     """
     runner_logger.debug(f"Running command: {command}")
     garak.cli.main(command.split())
-    return '/home/mwm/repositories/GBI/echker/runner/run_output.report.jsonl'
+    return '/home/mwm/repositories/GBI/ml-checker/runner/run_output.report.jsonl'

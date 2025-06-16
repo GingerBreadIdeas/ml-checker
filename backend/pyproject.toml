@@ -1,7 +1,7 @@
 [project]
-name = "echker-backend"
+name = "ml-checker-backend"
 version = "0.1.0"
-description = "Backend for Echker application"
+description = "Backend for ML-Checker application"
 authors = [{name = "Your Name", email = "your.email@example.com"}]
 requires-python = ">=3.9"
 dependencies = [

@@ -170,3 +170,29 @@ def get_prompt(
         raise HTTPException(status_code=404, detail="Prompt not found")
         
     return prompt
+
+@router.delete("/prompt_check/{prompt_id}")
+def delete_prompt(
+    *,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    prompt_id: int,
+) -> Any:
+    """
+    Delete a specific prompt by ID.
+    
+    Only allows deletion of prompts owned by the current user.
+    """
+    prompt = db.query(Prompt).filter(
+        Prompt.id == prompt_id, 
+        Prompt.user_id == current_user.id
+    ).first()
+    
+    if not prompt:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    
+    db.delete(prompt)
+    db.commit()
+    
+    return {"message": "Prompt deleted successfully"}

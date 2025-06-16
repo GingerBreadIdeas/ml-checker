@@ -5,7 +5,7 @@ from pydantic import BaseSettings, PostgresDsn, validator
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Echker"
+    PROJECT_NAME: str = "ML-Checker"
     API_V1_STR: str = "/api/v1"
     
     # Security
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: Optional[str] = os.getenv(
-        "DATABASE_URL", "postgresql://postgres:postgres@localhost/echker"
+        "DATABASE_URL", "postgresql://postgres:postgres@localhost/ml-checker"
     )
     
     # CORS

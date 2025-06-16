@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Mlechker API")
+app = FastAPI(title="ML-Checker API")
 
 # Configure CORS
 app.add_middleware(

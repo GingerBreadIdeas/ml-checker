@@ -78,7 +78,7 @@ const Settings: React.FC = () => {
       {/* API Access Section */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="font-medium text-lg mb-4">API Access</h3>
-        <p className="text-gray-700 mb-4">Generate an API token to access the Echker API programmatically. This token will expire after 30 days.</p>
+        <p className="text-gray-700 mb-4">Generate an API token to access the ML-Checker API programmatically. This token will expire after 30 days.</p>
         
         <div id="api-token-section">
           <button 
