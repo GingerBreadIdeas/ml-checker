@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { TrendingUp } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Mock data type definitions
 interface WeeklyData {
@@ -76,146 +79,134 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div className="w-full max-w-7xl mx-auto p-4 space-y-4">
       <h2 className="text-2xl font-semibold mb-4">Dashboard</h2>
       
       {/* Top row with stats and pie chart */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Total Messages Stat */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-medium text-gray-700 mb-4">Total Messages</h3>
-          <div className="flex items-center justify-center flex-col">
-            <div className="text-8xl font-bold text-blue-600 leading-none mb-4" id="total-messages-count">
-              {data.totalMessages.toLocaleString()}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Messages</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-none" id="total-messages-count">
+                {data.totalMessages.toLocaleString()}
+              </div>
+              <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
+                <TrendingUp className="h-4 w-4 mr-1" />
+                <span>12.5% increase from last month</span>
+              </div>
             </div>
-            <div className="flex items-center text-green-500 font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-              </svg>
-              <span>12.5% increase from last month</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
         
         {/* Pie Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Message Types</h3>
-          <div className="w-full h-64 flex justify-center items-center" id="pie-chart-container">
-            {/* SVG Pie Chart */}
-            <svg width="200" height="200" viewBox="0 0 42 42" className="donut">
-              <circle className="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
-              <circle className="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" strokeWidth="3"></circle>
-              {/* Normal messages segment */}
-              <circle 
-                className="donut-segment" 
-                cx="21" 
-                cy="21" 
-                r="15.91549430918954" 
-                fill="transparent" 
-                stroke="#0074D9" 
-                strokeWidth="3" 
-                strokeDasharray={`${totalPercent} ${100-totalPercent}`} 
-                strokeDashoffset="0"
-              ></circle>
-              {/* Injection segment */}
-              <circle 
-                className="donut-segment" 
-                cx="21" 
-                cy="21" 
-                r="15.91549430918954" 
-                fill="transparent" 
-                stroke="#FF4136" 
-                strokeWidth="3" 
-                strokeDasharray={`${injectionPercent} ${100-injectionPercent}`} 
-                strokeDashoffset={`-${totalPercent}`}
-              ></circle>
-              <g className="chart-text">
-                <text x="50%" y="50%" className="chart-number" textAnchor="middle" alignmentBaseline="middle">
-                  {totalPercent.toFixed(1)}%
-                </text>
-                <text x="50%" y="50%" className="chart-label" textAnchor="middle" alignmentBaseline="middle" dy="1.2em">
-                  normal
-                </text>
-              </g>
-            </svg>
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Message Types</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+          <div className="w-full h-48 sm:h-56 lg:h-64" id="pie-chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Normal', value: data.normalMessages, fill: '#3b82f6' },
+                    { name: 'Injections', value: data.injectionMessages, fill: '#ef4444' }
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="35%"
+                  outerRadius="65%"
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#ef4444" />
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))', 
+                    borderRadius: '6px',
+                    fontSize: '12px'
+                  }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div className="flex justify-center mt-4">
-            <div className="flex items-center mr-6">
-              <div className="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
-              <span className="text-sm">Normal ({totalPercent.toFixed(1)}%)</span>
+          <div className="flex flex-wrap justify-center gap-4 mt-4">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+              <span className="text-xs sm:text-sm text-muted-foreground">Normal ({totalPercent.toFixed(1)}%)</span>
             </div>
             <div className="flex items-center">
-              <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
-              <span className="text-sm">Injections ({injectionPercent.toFixed(1)}%)</span>
+              <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+              <span className="text-xs sm:text-sm text-muted-foreground">Injections ({injectionPercent.toFixed(1)}%)</span>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Bottom row with weekly chart */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-medium text-gray-700 mb-4">Messages Last Week</h3>
-        {/* Simplified bar chart with explicit heights */}
-        <div className="w-full p-4">
-          {/* Y-axis and chart grid */}
-          <div className="flex" style={{ height: "400px" }}>
-            {/* Y-axis labels */}
-            <div className="flex flex-col justify-between pr-2 text-right">
-              <span className="text-xs text-gray-600">80</span>
-              <span className="text-xs text-gray-600">60</span>
-              <span className="text-xs text-gray-600">40</span>
-              <span className="text-xs text-gray-600">20</span>
-              <span className="text-xs text-gray-600">0</span>
-            </div>
-            
-            {/* Chart area with grid lines */}
-            <div className="flex-1 relative">
-              {/* Grid lines */}
-              <div className="absolute inset-0">
-                <div className="absolute top-0 w-full border-t border-gray-200"></div>
-                <div className="absolute top-1/4 w-full border-t border-gray-200"></div>
-                <div className="absolute top-2/4 w-full border-t border-gray-200"></div>
-                <div className="absolute top-3/4 w-full border-t border-gray-200"></div>
-                <div className="absolute bottom-0 w-full border-t border-gray-400"></div>
-              </div>
-              
-              {/* Bars container */}
-              <div className="flex justify-between h-full items-end">
-                {data.weeklyData.map((dayData, index) => (
-                  <div className="flex flex-col items-center mx-2" style={{ width: "40px" }} key={index}>
-                    <div 
-                      className="w-full bg-blue-500 rounded-t bar-chart" 
-                      style={{ height: `${dayData.normal * 5}px` }} 
-                      data-value={dayData.normal}
-                      title={`${dayData.normal} normal messages`}
-                    ></div>
-                    <div 
-                      className="w-full bg-red-500 rounded-b mt-0.5 bar-chart" 
-                      style={{ height: `${dayData.injection * 5}px` }} 
-                      data-value={dayData.injection}
-                      title={`${dayData.injection} potential injections`}
-                    ></div>
-                    <p className="text-xs mt-2 font-medium">{dayData.day}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      <Card className="w-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Messages Last Week</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+        <div className="w-full h-48 sm:h-56 lg:h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={data.weeklyData} 
+              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis 
+                dataKey="day" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                width={30}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))', 
+                  borderRadius: '6px',
+                  fontSize: '12px'
+                }} 
+              />
+              <Legend 
+                wrapperStyle={{ fontSize: '12px' }}
+              />
+              <Bar dataKey="normal" fill="#3b82f6" name="Normal Messages" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="injection" fill="#ef4444" name="Potential Injections" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
         
-        <div className="flex justify-center mt-4">
-          <div className="flex items-center mr-6">
-            <div className="w-4 h-4 bg-blue-500 mr-2"></div>
-            <span className="text-sm">Normal Messages</span>
+        <div className="flex flex-wrap justify-center gap-4 mt-4">
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-blue-500 mr-2 rounded"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground">Normal Messages</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 bg-red-500 mr-2"></div>
-            <span className="text-sm">Potential Injections</span>
+            <div className="w-3 h-3 bg-red-500 mr-2 rounded"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground">Potential Injections</span>
           </div>
         </div>
         
-        <p id="serverStatus" className="text-gray-500 mt-6 text-sm">Server Status: Online</p>
-      </div>
+        <p id="serverStatus" className="text-muted-foreground mt-2 text-xs sm:text-sm text-center">Server Status: Online</p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
