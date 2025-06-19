@@ -1,10 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 const Settings: React.FC = () => {
   const [token, setToken] = useState<string>('');
   const [tokenDisplay, setTokenDisplay] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  
+  useEffect(() => {
+    // Check if dark mode is already enabled
+    const isDark = document.documentElement.classList.contains('dark');
+    const savedTheme = localStorage.getItem('theme');
+    setDarkMode(isDark || savedTheme === 'dark');
+  }, []);
+  
+  const toggleDarkMode = (enabled: boolean) => {
+    setDarkMode(enabled);
+    const root = document.documentElement;
+    
+    if (enabled) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const generateToken = async () => {
     const authToken = localStorage.getItem('token');
@@ -49,36 +72,43 @@ const Settings: React.FC = () => {
       <h2 className="text-2xl font-semibold mb-4">Settings</h2>
       
       {/* Preferences Section */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h3 className="font-medium text-lg mb-4">Preferences</h3>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Preferences</CardTitle>
+        </CardHeader>
+        <CardContent>
         <div className="space-y-2">
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
+            <label htmlFor="notifications" className="text-sm font-medium">Enable notifications</label>
             <input 
               type="checkbox" 
               id="notifications" 
-              className="mr-2"
+              className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
               checked={notifications}
               onChange={e => setNotifications(e.target.checked)}
             />
-            <label htmlFor="notifications">Enable notifications</label>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
+            <label htmlFor="darkmode" className="text-sm font-medium">Dark mode</label>
             <input 
               type="checkbox" 
               id="darkmode" 
-              className="mr-2"
+              className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-primary"
               checked={darkMode}
-              onChange={e => setDarkMode(e.target.checked)}
+              onChange={e => toggleDarkMode(e.target.checked)}
             />
-            <label htmlFor="darkmode">Dark mode</label>
           </div>
         </div>
-      </div>
+        </CardContent>
+      </Card>
       
       {/* API Access Section */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="font-medium text-lg mb-4">API Access</h3>
-        <p className="text-gray-700 mb-4">Generate an API token to access the ML-Checker API programmatically. This token will expire after 30 days.</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>API Access</CardTitle>
+        </CardHeader>
+        <CardContent>
+        <p className="text-muted-foreground mb-4">Generate an API token to access the ML-Checker API programmatically. This token will expire after 30 days.</p>
         
         <div id="api-token-section">
           <button 
@@ -140,7 +170,8 @@ else:
             </div>
           )}
         </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

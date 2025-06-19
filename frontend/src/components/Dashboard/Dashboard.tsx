@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { TrendingUp } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Mock data type definitions
 interface WeeklyData {
@@ -95,7 +93,9 @@ const Dashboard: React.FC = () => {
                 {data.totalMessages.toLocaleString()}
               </div>
               <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
-                <TrendingUp className="h-4 w-4 mr-1" />
+                <svg className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                </svg>
                 <span>12.5% increase from last month</span>
               </div>
             </div>
@@ -108,34 +108,17 @@ const Dashboard: React.FC = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Message Types</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-          <div className="w-full h-48 sm:h-56 lg:h-64" id="pie-chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Normal', value: data.normalMessages, fill: '#3b82f6' },
-                    { name: 'Injections', value: data.injectionMessages, fill: '#ef4444' }
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="35%"
-                  outerRadius="65%"
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  <Cell fill="#3b82f6" />
-                  <Cell fill="#ef4444" />
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))', 
-                    borderRadius: '6px',
-                    fontSize: '12px'
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="w-full h-48 sm:h-56 lg:h-64 flex items-center justify-center" id="pie-chart-container">
+            <div className="text-center">
+              <div className="w-32 h-32 rounded-full mx-auto mb-4 relative" style={{background: `conic-gradient(#3b82f6 0deg ${totalPercent * 3.6}deg, #ef4444 ${totalPercent * 3.6}deg 360deg)`}}>
+                <div className="absolute inset-4 bg-card rounded-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{totalPercent.toFixed(1)}%</div>
+                    <div className="text-xs text-muted-foreground">Normal</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex flex-wrap justify-center gap-4 mt-4">
             <div className="flex items-center">
@@ -158,39 +141,25 @@ const Dashboard: React.FC = () => {
         </CardHeader>
         <CardContent className="pt-0">
         <div className="w-full h-48 sm:h-56 lg:h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={data.weeklyData} 
-              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="day" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                width={30}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))', 
-                  borderRadius: '6px',
-                  fontSize: '12px'
-                }} 
-              />
-              <Legend 
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-              <Bar dataKey="normal" fill="#3b82f6" name="Normal Messages" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="injection" fill="#ef4444" name="Potential Injections" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-full flex items-end justify-between gap-2 px-4">
+            {data.weeklyData.map((dayData, index) => (
+              <div key={index} className="flex flex-col items-center flex-1">
+                <div className="w-full flex flex-col items-center">
+                  <div 
+                    className="w-8 bg-blue-500 rounded-t mb-1" 
+                    style={{ height: `${Math.max(dayData.normal * 2, 8)}px` }}
+                    title={`${dayData.normal} normal messages`}
+                  ></div>
+                  <div 
+                    className="w-8 bg-red-500 rounded-b" 
+                    style={{ height: `${Math.max(dayData.injection * 8, 4)}px` }}
+                    title={`${dayData.injection} potential injections`}
+                  ></div>
+                </div>
+                <span className="text-xs mt-2 text-muted-foreground">{dayData.day}</span>
+              </div>
+            ))}
+          </div>
         </div>
         
         <div className="flex flex-wrap justify-center gap-4 mt-4">

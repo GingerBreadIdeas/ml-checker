@@ -8,6 +8,7 @@ import Anomaly from './components/Anomaly/Anomaly';
 import Settings from './components/Settings/Settings';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import { MessageDetail } from './components/messages/MessageDetail';
 
 interface User {
   username: string;
@@ -126,6 +127,13 @@ function App() {
             <Layout>
               <ProtectedRoute>
                 <Tracking />
+              </ProtectedRoute>
+            </Layout>
+          } />
+          <Route path="/tracking/messages/:messageId" element={
+            <Layout>
+              <ProtectedRoute>
+                <MessageDetail />
               </ProtectedRoute>
             </Layout>
           } />
