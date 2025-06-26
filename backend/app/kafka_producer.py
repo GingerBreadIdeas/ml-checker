@@ -9,7 +9,7 @@ from confluent_kafka.cimpl import KafkaException
 logger = logging.getLogger(__name__)
 
 producer: Optional[Producer] = None  # global singleton
-kafka_connection_last_call = None
+kafka_connection_last_call = 0.0
 
 def get_kafka_producer() -> Optional[Producer]:
     global producer
@@ -19,7 +19,7 @@ def get_kafka_producer() -> Optional[Producer]:
     return producer
 
 
-def init_kafka_producer():
+def init_kafka_producer() -> None:
     """Initialize the Kafka producer with error handling"""
     global producer, kafka_connection_last_call
     

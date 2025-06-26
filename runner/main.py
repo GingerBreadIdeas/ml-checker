@@ -27,6 +27,21 @@ def send_results_to_kafka(producer, jsonl_filepath, original_data):
     except Exception as e:
         print(f"Error sending results to Kafka: {e}")
 
+def process_prompt_check(msg):
+    data = json.loads(msg.value().decode('utf-8'))
+    if not data.get("init", False):
+        print("Received JSON:", data)
+        prompt_check_data = data["prompt_check_data"]
+        jsonl_filepath = work(prompt_check_data)
+        if os.path.exists(jsonl_filepath):
+            send_results_to_kafka(producer, jsonl_filepath, data)
+        else:
+            print(f"Warning: Result file {jsonl_filepath} not found")
+
+
+def process_compute_message_metrics(msg):
+    #@TODO
+    pass
 
 if __name__ == "__main__":
     # Get Kafka connection details from environment or use defaults
@@ -62,15 +77,11 @@ if __name__ == "__main__":
             if msg.error():
                 print("Error:", msg.error())
             else:
-                data = json.loads(msg.value().decode('utf-8'))
-                if not data.get("init", False):
-                    print("Received JSON:", data)
-                    prompt_check_data = data["prompt_check_data"]
-                    jsonl_filepath = work(prompt_check_data)
-                    if os.path.exists(jsonl_filepath):
-                        send_results_to_kafka(producer, jsonl_filepath, data)
-                    else:
-                        print(f"Warning: Result file {jsonl_filepath} not found")
+                match msg.topic():
+                    case "prompt_check":
+                        process_prompt_check(msg)
+                    case "compute_message_metrics":
+                        process_compute_message_metrics(msg)
     except KeyboardInterrupt:
         pass
     finally:
