@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models.message import ChatMessage
-from ..models.user import User
+from ..models import ChatMessage
+from ..models import User
 from ..deps import get_current_user
 from ..services.embeddings import create_embeddings, reduce_to_2d
 

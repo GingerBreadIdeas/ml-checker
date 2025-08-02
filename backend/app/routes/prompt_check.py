@@ -7,8 +7,8 @@ from datetime import datetime
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models.prompt import Prompt
-from ..models.user import User
+from ..models import Prompt
+from ..models import User
 from ..kafka_producer import get_kafka_producer
 import logging
 

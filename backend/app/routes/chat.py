@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.message import ChatMessage
+from ..models import ChatMessage
 from ..schemas.message import ChatMessage as ChatMessageSchema
 from ..schemas.message import ChatMessageCreate, ChatMessageUpdate, ChatMessageList
 from ..deps import get_current_user
 from ..kafka_producer import get_kafka_producer
-from ..models.user import User
+from ..models import User
 
 import json
 import logging

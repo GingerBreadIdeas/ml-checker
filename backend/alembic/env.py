@@ -26,9 +26,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models so they are registered with Base.metadata
-from app.models.user import User
-from app.models.message import ChatMessage
-from app.models.prompt import Prompt
+from app.models import User, ChatMessage, Prompt
 
 # add your model's MetaData object here
 # for 'autogenerate' support
