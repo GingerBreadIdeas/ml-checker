@@ -3,13 +3,13 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from ....db.database import get_db
-from ....db.models.message import ChatMessage
-from ....schemas.message import ChatMessage as ChatMessageSchema
-from ....schemas.message import ChatMessageCreate, ChatMessageUpdate, ChatMessageList
-from ...deps import get_current_user
-from ....kafka_producer import get_kafka_producer
-from ....db.models.user import User
+from ..database import get_db
+from ..models.message import ChatMessage
+from ..schemas.message import ChatMessage as ChatMessageSchema
+from ..schemas.message import ChatMessageCreate, ChatMessageUpdate, ChatMessageList
+from ..deps import get_current_user
+from ..kafka_producer import get_kafka_producer
+from ..models.user import User
 
 import json
 import logging

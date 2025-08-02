@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-from ..core.config import settings
+from .core.config import settings
 
 load_dotenv()
 

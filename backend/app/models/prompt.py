@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
-from ..db.database import Base
+from ..database import Base
 
 
 class Prompt(Base):

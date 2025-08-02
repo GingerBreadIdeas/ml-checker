@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import logging
 
-from .api.api_v1.api import api_router
+from .routes import api_router
 from .core.config import settings
-from .db.database import Base, engine, get_db
-from .db.init_db import init_db
+from .database import Base, engine, get_db
+from .init_db import init_db
 from .kafka_producer import init_kafka_producer, close_kafka_producer, get_kafka_producer
 
 logger = logging.getLogger(__name__)

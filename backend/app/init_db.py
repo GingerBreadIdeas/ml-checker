@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy.orm import Session
 
-from ..core.security import get_password_hash
+from .core.security import get_password_hash
 from .models.user import User
 
 logger = logging.getLogger(__name__)

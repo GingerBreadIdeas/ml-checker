@@ -10,7 +10,7 @@ from alembic import context
 # Add the parent directory to sys.path so we can import our app
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from app.db.database import Base
+from app.database import Base
 from app.core.config import settings
 
 # this is the Alembic Config object, which provides
@@ -26,9 +26,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models so they are registered with Base.metadata
-from app.db.models.user import User
-from app.db.models.message import ChatMessage, MessageMetrics
-from app.db.models.prompt import Prompt
+from app.models.user import User
+from app.models.message import ChatMessage
+from app.models.prompt import Prompt
 
 # add your model's MetaData object here
 # for 'autogenerate' support
