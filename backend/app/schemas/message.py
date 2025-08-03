@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class ChatMessageBase(BaseModel):
     is_prompt_injection: Optional[bool] = False
     content: str
-    session_id: str
+    session_id: Optional[str] = None
 
 class ChatMessageCreate(ChatMessageBase):
     pass
@@ -19,6 +19,7 @@ class ChatMessageUpdate(BaseModel):
 
 class ChatMessage(ChatMessageBase):
     id: int
+    session_id: Optional[str] = None
     created_at: datetime
     response: Optional[str] = None
     is_prompt_injection: bool = False

@@ -63,7 +63,6 @@ def create_message(
     message = ChatMessage(
         session_id=message_in.session_id,  # Just use the string session_id directly
         content=message_in.content,
-        response=message_in.response,
         is_prompt_injection=message_in.is_prompt_injection,
     )
     db.add(message)
