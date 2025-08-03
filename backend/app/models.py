@@ -57,7 +57,7 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False, default='default')
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -74,7 +74,7 @@ class Project(Base):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, default='default')
     description = Column(Text, nullable=True)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
     is_default = Column(Boolean, default=False)
@@ -128,7 +128,7 @@ class Session(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    name = Column(String, nullable=True)
+    user_created_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships

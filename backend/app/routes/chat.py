@@ -1,39 +1,35 @@
+import json
+import logging
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import ChatMessage
-from ..schemas.message import ChatMessage as ChatMessageSchema
-from ..schemas.message import ChatMessageCreate, ChatMessageUpdate, ChatMessageList
 from ..deps import get_current_user
 from ..kafka_producer import get_kafka_producer
-from ..models import User
-
-import json
-import logging
+from ..models import ChatMessage, Organization, Project, Session, User, UserRole
+from ..schemas.message import ChatMessage as ChatMessageSchema
+from ..schemas.message import ChatMessageCreate, ChatMessageList, ChatMessageUpdate
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-default_metrics_options = {
-    "llama_guard": {}
-}
+default_metrics_options = {"llama_guard": {}}
+
 
 def trigger_metrics_computation(message: ChatMessage, metrics_options):
     producer = get_kafka_producer()
     if producer is None:
         logger.warning("Kafka is not available. Prompt check will not be processed.")
 
-    message = {
-        "id": message.id,
-        "content": message.content,
-        "options": metrics_options
-    }
-    producer.produce("compute_message_metrics", value=json.dumps(message).encode('utf-8'))
+    message = {"id": message.id, "content": message.content, "options": metrics_options}
+    producer.produce(
+        "compute_message_metrics", value=json.dumps(message).encode("utf-8")
+    )
     producer.poll(0)  # Process delivery reports
     logger.info(f"Successfully sent prompt {message.id} to Kafka for checking")
+
 
 @router.post("/messages", response_model=ChatMessageSchema)
 def create_message(
@@ -43,10 +39,44 @@ def create_message(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Create a new chat message.
+    Create a new chat message in the user's default project session.
     """
+    # Get user's default organization
+    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no organization")
+
+    # Get organization's default project
+    project = (
+        db.query(Project)
+        .filter(
+            Project.organization_id == user_role.organization_id,
+            Project.name == "default",
+        )
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404, detail="Organization has no default project"
+        )
+
+    # Get or create a default session for the project
+    session = (
+        db.query(Session)
+        .filter(
+            Session.project_id == project.id,
+            Session.user_created_id == message_in.session_id,
+        )
+        .first()
+    )
+    if not session:
+        session = Session(project_id=project.id, user_created_id=message_in.session_id)
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+
     message = ChatMessage(
-        user_id=current_user.id,
+        session_id=session.id,
         content=message_in.content,
         response=message_in.response,
         is_prompt_injection=message_in.is_prompt_injection,
@@ -74,11 +104,32 @@ def read_messages(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Retrieve chat messages for the current user.
+    Retrieve chat messages for the current user's default organization and project.
     """
+    # Get user's default organization (assuming one per user for now)
+    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no organization")
+
+    # Get organization's default project (assuming one per organization for now)
+    project = (
+        db.query(Project)
+        .filter(
+            Project.organization_id == user_role.organization_id,
+            Project.name == "default",
+        )
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404, detail="Organization has no default project"
+        )
+
+    # Get messages through project -> sessions -> messages
     messages = (
         db.query(ChatMessage)
-        .filter(ChatMessage.user_id == current_user.id)
+        .join(Session, ChatMessage.session_id == Session.id)
+        .filter(Session.project_id == project.id)
         .offset(skip)
         .limit(limit)
         .all()
@@ -94,11 +145,34 @@ def read_message(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Get a specific chat message by ID.
+    Get a specific chat message by ID (must belong to user's organization/project).
     """
-    message = db.query(ChatMessage).filter(
-        ChatMessage.id == message_id, ChatMessage.user_id == current_user.id
-    ).first()
+    # Get user's default organization
+    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no organization")
+
+    # Get organization's default project
+    project = (
+        db.query(Project)
+        .filter(
+            Project.organization_id == user_role.organization_id,
+            Project.name == "default",
+        )
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404, detail="Organization has no default project"
+        )
+
+    # Get message through project -> session -> message
+    message = (
+        db.query(ChatMessage)
+        .join(Session, ChatMessage.session_id == Session.id)
+        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
+        .first()
+    )
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     return message
@@ -114,12 +188,35 @@ def delete_message(
     """
     Delete a chat message.
     """
-    message = db.query(ChatMessage).filter(
-        ChatMessage.id == message_id, ChatMessage.user_id == current_user.id
-    ).first()
+    # Get user's default organization
+    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no organization")
+
+    # Get organization's default project
+    project = (
+        db.query(Project)
+        .filter(
+            Project.organization_id == user_role.organization_id,
+            Project.name == "default",
+        )
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404, detail="Organization has no default project"
+        )
+
+    # Get message through project -> session -> message
+    message = (
+        db.query(ChatMessage)
+        .join(Session, ChatMessage.session_id == Session.id)
+        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
+        .first()
+    )
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
-    
+
     db.delete(message)
     db.commit()
     return message
@@ -136,12 +233,35 @@ def update_message(
     """
     Update a chat message's is_prompt_injection flag.
     """
-    message = db.query(ChatMessage).filter(
-        ChatMessage.id == message_id, ChatMessage.user_id == current_user.id
-    ).first()
+    # Get user's default organization
+    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no organization")
+
+    # Get organization's default project
+    project = (
+        db.query(Project)
+        .filter(
+            Project.organization_id == user_role.organization_id,
+            Project.name == "default",
+        )
+        .first()
+    )
+    if not project:
+        raise HTTPException(
+            status_code=404, detail="Organization has no default project"
+        )
+
+    # Get message through project -> session -> message
+    message = (
+        db.query(ChatMessage)
+        .join(Session, ChatMessage.session_id == Session.id)
+        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
+        .first()
+    )
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
-    
+
     message.is_prompt_injection = message_in.is_prompt_injection
     db.add(message)
     db.commit()
