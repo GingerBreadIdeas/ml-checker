@@ -19,6 +19,7 @@ import { cn } from "../../lib/utils"
 
 export interface Message {
   id: string
+  session_id?: string
   content: string
   response?: string
   is_prompt_injection: boolean
@@ -151,6 +152,24 @@ export function MessagesTable({
             >
               {isInjection ? "Injection" : "Normal"}
             </Badge>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "session_id",
+      header: "Session",
+      cell: ({ row }) => {
+        const sessionId = row.getValue("session_id") as string
+        return (
+          <div className="text-sm font-mono text-muted-foreground">
+            {sessionId ? (
+              <Badge variant="outline" className="text-xs">
+                {sessionId.length > 8 ? `${sessionId.substring(0, 8)}...` : sessionId}
+              </Badge>
+            ) : (
+              <span className="text-xs">No session</span>
+            )}
           </div>
         )
       },

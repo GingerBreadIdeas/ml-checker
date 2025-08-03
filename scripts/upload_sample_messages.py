@@ -24,7 +24,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def upload_message(api_url, token, content, is_prompt_injection):
+def upload_message(api_url, token, content, is_prompt_injection, session_id="default"):
     """Upload a single message to the API"""
     headers = {
         'Authorization': f'Bearer {token}',
@@ -33,7 +33,8 @@ def upload_message(api_url, token, content, is_prompt_injection):
     
     data = {
         'content': content,
-        'is_prompt_injection': is_prompt_injection
+        'is_prompt_injection': is_prompt_injection,
+        'session_id': session_id
     }
     
     try:
@@ -93,7 +94,7 @@ def main():
     
     try:
         auth_response = requests.get(
-            f'{args.url}/api/whoami',
+            f'{args.url}/auth/whoami',
             headers=headers
         )
         
@@ -108,8 +109,8 @@ def main():
         return
     
     # Sample the required number of messages
-    normal_sample = random.sample(normal_messages, min(120, len(normal_messages)))
-    injection_sample = random.sample(injection_messages, min(40, len(injection_messages)))
+    normal_sample = random.sample(normal_messages, min(30, len(normal_messages)))
+    injection_sample = random.sample(injection_messages, min(10, len(injection_messages)))
     
     print(f"Will upload 60 normal messages and 20 prompt injection messages")
     

@@ -1,7 +1,11 @@
 import os
 from typing import Optional, Dict, Any, List
 
-from pydantic import BaseSettings, PostgresDsn, validator
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
+from pydantic import validator
 
 
 class Settings(BaseSettings):

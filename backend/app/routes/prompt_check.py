@@ -5,11 +5,11 @@ from fastapi import Depends, APIRouter, Query
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from ....db.database import get_db
-from ...deps import get_current_user
-from ....db.models.prompt import Prompt
-from ....db.models.user import User
-from ....kafka_producer import get_kafka_producer
+from ..database import get_db
+from ..deps import get_current_user
+from ..models import Prompt
+from ..models import User
+from ..kafka_producer import get_kafka_producer
 import logging
 
 router = APIRouter()

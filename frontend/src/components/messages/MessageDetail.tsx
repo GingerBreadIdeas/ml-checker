@@ -240,6 +240,15 @@ export function MessageDetail() {
                 </div>
               </div>
 
+              {message.session_id && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Session ID</h4>
+                  <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                    {message.session_id}
+                  </code>
+                </div>
+              )}
+
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Created At</h4>
                 <div className="flex items-center gap-2 text-sm">
