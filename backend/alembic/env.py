@@ -28,7 +28,7 @@ if config.config_file_name is not None:
 # Import all models so they are registered with Base.metadata
 from app.models import (
     User, ChatMessage, Prompt, 
-    Organization, Project, Session, 
+    Organization, Project, 
     UserRole, Tag, RoleType
 )
 

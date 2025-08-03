@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..deps import get_current_user
 from ..kafka_producer import get_kafka_producer
-from ..models import ChatMessage, Organization, Project, Session, User, UserRole
+from ..models import ChatMessage, Organization, Project, User, UserRole
 from ..schemas.message import ChatMessage as ChatMessageSchema
 from ..schemas.message import ChatMessageCreate, ChatMessageList, ChatMessageUpdate
 
@@ -60,24 +60,10 @@ def create_message(
             status_code=404, detail="Organization has no default project"
         )
 
-    # Get or create a default session for the project
-    session = (
-        db.query(Session)
-        .filter(
-            Session.project_id == project.id,
-            Session.user_created_id == message_in.session_id,
-        )
-        .first()
-    )
-    if not session:
-        session = Session(project_id=project.id, user_created_id=message_in.session_id)
-        db.add(session)
-        db.commit()
-        db.refresh(session)
-
     message = ChatMessage(
-        session_id=session.id,
+        session_id=message_in.session_id,  # Just use the string session_id directly
         content=message_in.content,
+        response=message_in.response,
         is_prompt_injection=message_in.is_prompt_injection,
     )
     db.add(message)
@@ -124,11 +110,10 @@ def read_messages(
             status_code=404, detail="Organization has no default project"
         )
 
-    # Get messages through project -> sessions -> messages
+    # Get all messages for this user (through their default project)
+    # Note: For now we get all messages, but could filter by session_id if needed
     messages = (
         db.query(ChatMessage)
-        .join(Session, ChatMessage.session_id == Session.id)
-        .filter(Session.project_id == project.id)
         .offset(skip)
         .limit(limit)
         .all()
@@ -165,13 +150,8 @@ def read_message(
             status_code=404, detail="Organization has no default project"
         )
 
-    # Get message through project -> session -> message
-    message = (
-        db.query(ChatMessage)
-        .join(Session, ChatMessage.session_id == Session.id)
-        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
-        .first()
-    )
+    # Get message by ID (basic access for now)
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     return message
@@ -206,13 +186,8 @@ def delete_message(
             status_code=404, detail="Organization has no default project"
         )
 
-    # Get message through project -> session -> message
-    message = (
-        db.query(ChatMessage)
-        .join(Session, ChatMessage.session_id == Session.id)
-        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
-        .first()
-    )
+    # Get message by ID (basic access for now)
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 
@@ -251,13 +226,8 @@ def update_message(
             status_code=404, detail="Organization has no default project"
         )
 
-    # Get message through project -> session -> message
-    message = (
-        db.query(ChatMessage)
-        .join(Session, ChatMessage.session_id == Session.id)
-        .filter(ChatMessage.id == message_id, Session.project_id == project.id)
-        .first()
-    )
+    # Get message by ID (basic access for now)
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 

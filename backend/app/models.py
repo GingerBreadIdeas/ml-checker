@@ -40,12 +40,7 @@ project_tag_association = Table(
     Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
 )
 
-session_tag_association = Table(
-    'session_tags',
-    Base.metadata,
-    Column('session_id', Integer, ForeignKey('session.id'), primary_key=True),
-    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
-)
+# Removed session_tag_association - sessions are now just string properties
 
 
 class RoleType(enum.Enum):
@@ -87,7 +82,6 @@ class Project(Base):
     
     # Relationships
     organization = relationship("Organization", back_populates="projects")
-    sessions = relationship("Session", back_populates="project", cascade="all, delete-orphan")
     prompts = relationship("Prompt", back_populates="project", cascade="all, delete-orphan")
     tags = relationship("Tag", secondary=project_tag_association, back_populates="projects")
 
@@ -124,24 +118,11 @@ class UserRole(Base):
     organization = relationship("Organization", back_populates="user_roles")
 
 
-class Session(Base):
-    __tablename__ = "session"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    user_created_id = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    project = relationship("Project", back_populates="sessions")
-    chat_messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
-    tags = relationship("Tag", secondary=session_tag_association, back_populates="sessions")
-
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("session.id"), nullable=False)
+    session_id = Column(String, nullable=True)  # Simple string session identifier
     content = Column(Text, nullable=False)
     response = Column(Text, nullable=True)  # Optional response from chatbot
     is_prompt_injection = Column(Boolean, default=False)  # Flag for prompt injection attacks
@@ -149,7 +130,6 @@ class ChatMessage(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="chat_messages")
     tags = relationship("Tag", secondary=chat_message_tag_association, back_populates="chat_messages")
 
 
@@ -183,7 +163,6 @@ class Tag(Base):
     # Many-to-many relationships
     users = relationship("User", secondary=user_tag_association, back_populates="tags")
     projects = relationship("Project", secondary=project_tag_association, back_populates="tags")
-    sessions = relationship("Session", secondary=session_tag_association, back_populates="tags")
     chat_messages = relationship("ChatMessage", secondary=chat_message_tag_association, back_populates="tags")
     prompts = relationship("Prompt", secondary=prompt_tag_association, back_populates="tags")
 

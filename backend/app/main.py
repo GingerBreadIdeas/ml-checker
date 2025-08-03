@@ -10,7 +10,7 @@ from .core.config import settings
 from .database import Base, engine, get_db
 from .init_db import init_db
 from .kafka_producer import init_kafka_producer, close_kafka_producer, get_kafka_producer
-from .models import User, Organization, Project, UserRole, Session as SessionModel, ChatMessage, Prompt, Tag
+from .models import User, Organization, Project, UserRole, ChatMessage, Prompt, Tag
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,6 @@ class ProjectAdmin(ModelView, model=Project):
 class UserRoleAdmin(ModelView, model=UserRole):
     column_list = [UserRole.id, UserRole.user_id, UserRole.organization_id, UserRole.role, UserRole.created_at]
 
-class SessionAdmin(ModelView, model=SessionModel):
-    column_list = [SessionModel.id, SessionModel.project_id, SessionModel.user_created_id, SessionModel.created_at]
-
 class ChatMessageAdmin(ModelView, model=ChatMessage):
     column_list = [ChatMessage.id, ChatMessage.content, ChatMessage.session_id, ChatMessage.is_prompt_injection, ChatMessage.created_at]
     column_searchable_list = [ChatMessage.content]
@@ -68,7 +65,7 @@ admin.add_view(UserAdmin)
 admin.add_view(OrganizationAdmin)
 admin.add_view(ProjectAdmin)
 admin.add_view(UserRoleAdmin)
-admin.add_view(SessionAdmin)
+# Removed SessionAdmin - sessions are now just string properties
 admin.add_view(ChatMessageAdmin)
 admin.add_view(PromptAdmin)
 admin.add_view(TagAdmin)
