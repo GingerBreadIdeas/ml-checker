@@ -1,3 +1,5 @@
+import requests
+from langchain_core.callbacks import BaseCallbackHandler
 
 d = """
 __init__/LangchainCallbackHandler
@@ -32,7 +34,38 @@ _create_message_dicts/LangchainCallbackHandler
 _log_debug_event/LangchainCallbackHandler
 """
 
-from langchain_core.callbacks import BaseCallbackHandler
+
+def upload_message(
+    api_url, token, content, is_prompt_injection, session_id="default"
+):
+    """Upload a single message to the API"""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "content": content,
+        "is_prompt_injection": is_prompt_injection,
+        "session_id": session_id,
+    }
+
+    try:
+        response = requests.post(
+            f"{api_url}/chat/messages", json=data, headers=headers
+        )
+
+        if response.status_code == 200:
+            message = response.json()
+            print(f"Created message ID: {message['id']}")
+            return True
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        print(f"Exception: {e}")
+        return False
+
 
 class Client:
     def __init__(self, token):
@@ -40,11 +73,8 @@ class Client:
 
 
 class CheckerCallbackHandler(BaseCallbackHandler):
-    def __init__(
-        self, *, token, update_trace: bool = False
-    ) -> None:
+    def __init__(self, *, token, update_trace: bool = False) -> None:
         self.client = Client(token)
 
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         print(f"My custom handler, token: {token}")
-

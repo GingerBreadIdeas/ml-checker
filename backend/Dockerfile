@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
-    libatlas-base-dev \
+    libopenblas-dev \
     gfortran \
     pkg-config \
     libhdf5-dev \

@@ -3,10 +3,12 @@
 Script to upload sample messages to the ML-Checker API using the deepset/prompt-injections dataset.
 
 Usage:
-    python upload_sample_messages.py --token YOUR_API_TOKEN [--url API_URL]
+    python upload_sample_messages.py --token YOUR_PROJECT_TOKEN [--url API_URL]
 
 Example:
-    python upload_sample_messages.py --token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    python upload_sample_messages.py --token proj_1234567890abcdef...
+
+Note: Use a project API token (not a user JWT token). Generate one from the Settings page.
 """
 
 import argparse
@@ -19,7 +21,7 @@ from datasets import load_dataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Upload sample messages to the ML-Checker API')
-    parser.add_argument('--token', required=True, help='API token for authentication')
+    parser.add_argument('--token', required=True, help='Project API token for authentication')
     parser.add_argument('--url', default='http://localhost:8000/api/v1', help='Base URL for the API')
     return parser.parse_args()
 
@@ -86,38 +88,18 @@ def main():
     injection_messages = train_data[train_data['label'] == 1]['text'].tolist()
     
     print(f"Found {len(normal_messages)} normal messages and {len(injection_messages)} injection messages")
-    
-    # First check if we can authenticate with the token
-    headers = {
-        'Authorization': f'Bearer {args.token}'
-    }
-    
-    try:
-        auth_response = requests.get(
-            f'{args.url}/auth/whoami',
-            headers=headers
-        )
-        
-        if auth_response.status_code == 200:
-            username = auth_response.json().get('username', 'unknown')
-            print(f"Authenticated as: {username}")
-        else:
-            print(f"Authentication failed: {auth_response.status_code} - {auth_response.text}")
-            return
-    except Exception as e:
-        print(f"Authentication failed: {e}")
-        return
+    print(f"Using project API token for authentication")
     
     # Sample the required number of messages
     normal_sample = random.sample(normal_messages, min(30, len(normal_messages)))
     injection_sample = random.sample(injection_messages, min(10, len(injection_messages)))
     
-    print(f"Will upload 60 normal messages and 20 prompt injection messages")
+    print(f"Will upload {len(normal_sample)} normal messages and {len(injection_sample)} prompt injection messages")
     
     # Upload normal messages
     success_count = 0
     for i, msg in enumerate(normal_sample):
-        print(f"Uploading normal message {i+1}/60...")
+        print(f"Uploading normal message {i+1}/{len(normal_sample)}...")
         
         # Truncate long messages
         if len(msg) > 1000:
@@ -129,12 +111,12 @@ def main():
         # Add a small delay to avoid overwhelming the API
         time.sleep(0.2)
     
-    print(f"Successfully uploaded {success_count}/60 normal messages")
+    print(f"Successfully uploaded {success_count}/{len(normal_sample)} normal messages")
     
     # Upload injection messages
     injection_success = 0
     for i, msg in enumerate(injection_sample):
-        print(f"Uploading injection message {i+1}/20...")
+        print(f"Uploading injection message {i+1}/{len(injection_sample)}...")
         
         # Truncate long messages
         if len(msg) > 1000:
@@ -146,8 +128,8 @@ def main():
         # Add a small delay to avoid overwhelming the API
         time.sleep(0.2)
     
-    print(f"Successfully uploaded {injection_success}/20 injection messages")
-    print(f"Total: {success_count + injection_success}/80 messages uploaded")
+    print(f"Successfully uploaded {injection_success}/{len(injection_sample)} injection messages")
+    print(f"Total: {success_count + injection_success}/{len(normal_sample) + len(injection_sample)} messages uploaded")
 
 
 if __name__ == "__main__":

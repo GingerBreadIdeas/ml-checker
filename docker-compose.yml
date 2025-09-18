@@ -21,9 +21,7 @@ services:
 
   backend:
     build: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-config=logging_config.yaml
     ports:
       - "8000:8000"
     environment:
@@ -41,15 +39,29 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # Don't override node_modules with host directory
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8000/api/v1
     depends_on:
       - backend
+    networks:
+      - app-network
+
+  # 👇 migration service you can attach to and run alembic
+  migrate:
+    build: ./backend
+    # don't auto-start with `up` unless you ask for it
+    profiles: ["ops"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres/ml-checker
+    # keep the container alive so you can exec into it
+    command: ["bash", "-lc", "sleep infinity"]
+    volumes:
+      - ./backend:/app
     networks:
       - app-network
 

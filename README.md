@@ -26,7 +26,15 @@ If you don't need the prompt checking functionality, you can run just the core a
 
 ```bash
 # Start just the core application (without Kafka)
-docker compose up -d
+docker compose up
+```
+
+Dev stack with docker:
+
+
+```bash
+# Start just the core application (without Kafka)
+docker compose -f docker-compose.yml -f docker-compose-dev.yml up
 ```
 
 The application will start with Kafka functionality disabled, but all other features will work normally.

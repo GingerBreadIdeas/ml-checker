@@ -67,7 +67,7 @@ const Tracking: React.FC = () => {
           </div>
           <div>
             <h4 className="font-medium mb-1">Using the Messages API</h4>
-            <p className="text-sm">Messages are created via the API using your API token. Visit the Settings page to generate a token and see examples.</p>
+            <p className="text-sm">Messages are created via the API using your project API token. All users in a project share the same API tokens. Visit the Settings page to generate a project token and see examples.</p>
           </div>
         </div>
       </Card>

@@ -6,12 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, get_project_from_token
 from ..kafka_producer import get_kafka_producer
-from ..models import ChatMessage, Organization, Project, User, UserRole
+from ..models import ChatMessage, Project, User, UserRole
 from ..schemas.message import ChatMessage as ChatMessageSchema
 from ..schemas.message import ChatMessageCreate, ChatMessageList, ChatMessageUpdate
 
+from loguru import logger
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -36,32 +37,15 @@ def create_message(
     *,
     db: Session = Depends(get_db),
     message_in: ChatMessageCreate,
-    current_user: User = Depends(get_current_user),
+    project: Project = Depends(get_project_from_token),
 ) -> Any:
     """
-    Create a new chat message in the user's default project session.
+    Create a new chat message in a project using project API token.
     """
-    # Get user's default organization
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
-    if not user_role:
-        raise HTTPException(status_code=404, detail="User has no organization")
-
-    # Get organization's default project
-    project = (
-        db.query(Project)
-        .filter(
-            Project.organization_id == user_role.organization_id,
-            Project.name == "default",
-        )
-        .first()
-    )
-    if not project:
-        raise HTTPException(
-            status_code=404, detail="Organization has no default project"
-        )
 
     message = ChatMessage(
         session_id=message_in.session_id,  # Just use the string session_id directly
+        project_id=project.id,
         content=message_in.content,
         is_prompt_injection=message_in.is_prompt_injection,
     )
@@ -88,35 +72,41 @@ def read_messages(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Retrieve chat messages for the current user's default organization and project.
+    Retrieve chat messages for the current user's project.
     """
-    # Get user's default organization (assuming one per user for now)
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
-    if not user_role:
-        raise HTTPException(status_code=404, detail="User has no organization")
-
-    # Get organization's default project (assuming one per organization for now)
-    project = (
-        db.query(Project)
-        .filter(
-            Project.organization_id == user_role.organization_id,
-            Project.name == "default",
-        )
+    # Get user's project through UserRole, preferring default project
+    user_role = (
+        db.query(UserRole)
+        .join(Project)
+        .filter(UserRole.user_id == current_user.id)
+        .filter(Project.is_default == True)
         .first()
     )
+
+    # Fallback to any project if no default project found
+    if not user_role:
+        user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no project")
+
+    # Get the project directly from the user role
+    project = user_role.project
+    logger.info(f"Project: {project.id}")
     if not project:
         raise HTTPException(
-            status_code=404, detail="Organization has no default project"
+            status_code=404, detail="User has no valid project"
         )
 
-    # Get all messages for this user (through their default project)
-    # Note: For now we get all messages, but could filter by session_id if needed
+    # Get all messages for this user's project
     messages = (
         db.query(ChatMessage)
+        .filter(ChatMessage.project_id == project.id)
         .offset(skip)
         .limit(limit)
         .all()
     )
+    logger.info(f"{messages}")
     return {"messages": messages}
 
 
@@ -128,29 +118,36 @@ def read_message(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Get a specific chat message by ID (must belong to user's organization/project).
+    Get a specific chat message by ID (must belong to user's project).
     """
-    # Get user's default organization
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
-    if not user_role:
-        raise HTTPException(status_code=404, detail="User has no organization")
-
-    # Get organization's default project
-    project = (
-        db.query(Project)
-        .filter(
-            Project.organization_id == user_role.organization_id,
-            Project.name == "default",
-        )
+    # Get user's project through UserRole, preferring default project
+    user_role = (
+        db.query(UserRole)
+        .join(Project)
+        .filter(UserRole.user_id == current_user.id)
+        .filter(Project.is_default == True)
         .first()
     )
+
+    # Fallback to any project if no default project found
+    if not user_role:
+        user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no project")
+
+    # Get the project directly from the user role
+    project = user_role.project
     if not project:
         raise HTTPException(
-            status_code=404, detail="Organization has no default project"
+            status_code=404, detail="User has no valid project"
         )
 
-    # Get message by ID (basic access for now)
-    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    # Get message by ID within the user's project
+    message = db.query(ChatMessage).filter(
+        ChatMessage.id == message_id,
+        ChatMessage.project_id == project.id
+    ).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     return message
@@ -166,27 +163,34 @@ def delete_message(
     """
     Delete a chat message.
     """
-    # Get user's default organization
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
-    if not user_role:
-        raise HTTPException(status_code=404, detail="User has no organization")
-
-    # Get organization's default project
-    project = (
-        db.query(Project)
-        .filter(
-            Project.organization_id == user_role.organization_id,
-            Project.name == "default",
-        )
+    # Get user's project through UserRole, preferring default project
+    user_role = (
+        db.query(UserRole)
+        .join(Project)
+        .filter(UserRole.user_id == current_user.id)
+        .filter(Project.is_default == True)
         .first()
     )
+
+    # Fallback to any project if no default project found
+    if not user_role:
+        user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no project")
+
+    # Get the project directly from the user role
+    project = user_role.project
     if not project:
         raise HTTPException(
-            status_code=404, detail="Organization has no default project"
+            status_code=404, detail="User has no valid project"
         )
 
-    # Get message by ID (basic access for now)
-    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    # Get message by ID within the user's project
+    message = db.query(ChatMessage).filter(
+        ChatMessage.id == message_id,
+        ChatMessage.project_id == project.id
+    ).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 
@@ -206,27 +210,34 @@ def update_message(
     """
     Update a chat message's is_prompt_injection flag.
     """
-    # Get user's default organization
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
-    if not user_role:
-        raise HTTPException(status_code=404, detail="User has no organization")
-
-    # Get organization's default project
-    project = (
-        db.query(Project)
-        .filter(
-            Project.organization_id == user_role.organization_id,
-            Project.name == "default",
-        )
+    # Get user's project through UserRole, preferring default project
+    user_role = (
+        db.query(UserRole)
+        .join(Project)
+        .filter(UserRole.user_id == current_user.id)
+        .filter(Project.is_default == True)
         .first()
     )
+
+    # Fallback to any project if no default project found
+    if not user_role:
+        user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+
+    if not user_role:
+        raise HTTPException(status_code=404, detail="User has no project")
+
+    # Get the project directly from the user role
+    project = user_role.project
     if not project:
         raise HTTPException(
-            status_code=404, detail="Organization has no default project"
+            status_code=404, detail="User has no valid project"
         )
 
-    # Get message by ID (basic access for now)
-    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    # Get message by ID within the user's project
+    message = db.query(ChatMessage).filter(
+        ChatMessage.id == message_id,
+        ChatMessage.project_id == project.id
+    ).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 

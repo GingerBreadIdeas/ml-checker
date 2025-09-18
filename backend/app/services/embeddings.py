@@ -12,28 +12,34 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
 
 # Import transformers after setting the environment variable
+AutoTokenizer = None
+AutoModel = None
+TRANSFORMERS_AVAILABLE = False
+
 try:
     from transformers import AutoTokenizer, AutoModel
+    TRANSFORMERS_AVAILABLE = True
     logger.info("Successfully imported transformers")
 except Exception as e:
-    logger.error(f"Error importing transformers: {str(e)}")
-    
+    logger.warning(f"Transformers not available: {str(e)}. Embedding functionality will be disabled.")
+
 # Load model and tokenizer once at module level for better performance
 _MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 _TOKENIZER = None
 _MODEL = None
 
-try:
-    logger.info(f"Pre-loading tokenizer and model: {_MODEL_NAME}")
-    _TOKENIZER = AutoTokenizer.from_pretrained(_MODEL_NAME)
-    _MODEL = AutoModel.from_pretrained(_MODEL_NAME)
-    # Use CPU by default
-    _MODEL = _MODEL.to("cpu")
-    logger.info("Successfully pre-loaded tokenizer and model")
-except Exception as e:
-    logger.error(f"Error pre-loading tokenizer and model: {str(e)}")
-    _TOKENIZER = None
-    _MODEL = None
+if TRANSFORMERS_AVAILABLE:
+    try:
+        logger.info(f"Pre-loading tokenizer and model: {_MODEL_NAME}")
+        _TOKENIZER = AutoTokenizer.from_pretrained(_MODEL_NAME)
+        _MODEL = AutoModel.from_pretrained(_MODEL_NAME)
+        # Use CPU by default
+        _MODEL = _MODEL.to("cpu")
+        logger.info("Successfully pre-loaded tokenizer and model")
+    except Exception as e:
+        logger.warning(f"Failed to pre-load model: {str(e)}. Embeddings will load on-demand.")
+        _TOKENIZER = None
+        _MODEL = None
 
 
 def create_embeddings(
