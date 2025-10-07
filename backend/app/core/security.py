@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Union, Optional
+import secrets
+import hashlib
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -32,3 +34,25 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+def generate_project_token() -> tuple[str, str]:
+    """Generate a project API token and its hash.
+
+    Returns:
+        tuple: (raw_token, token_hash) where raw_token should be given to user
+               and token_hash should be stored in database
+    """
+    # Generate a secure random token
+    raw_token = secrets.token_urlsafe(32)
+
+    # Create hash for storage
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+    return raw_token, token_hash
+
+
+def verify_project_token(raw_token: str, stored_hash: str) -> bool:
+    """Verify a project token against its stored hash."""
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    return token_hash == stored_hash

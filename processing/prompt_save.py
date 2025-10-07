@@ -102,10 +102,11 @@ def save_message_metrics(data):
 
 
 
-def process_kafka_message():
+def process_kafka_message(msg):
     data = json.loads(msg.value().decode('utf-8'))
     if data.get("init", False):
-        continue
+        # just initialising the queue
+        return
 
     match msg.topic():
         case "save_prompt_check":
@@ -198,7 +199,7 @@ if __name__ == "__main__":
                 print("Error:", msg.error())
             else:
                 try:
-                    process_kafka_message()
+                    process_kafka_message(msg)
                 except json.JSONDecodeError:
                     print(f"Received non-JSON message, ignoring")
                 except Exception as e:

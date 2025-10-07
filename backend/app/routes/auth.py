@@ -24,7 +24,9 @@ def login_access_token(
     """
     user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
     if not user:
-        user = db.query(UserModel).filter(UserModel.username == form_data.username).first()
+        user = (
+            db.query(UserModel).filter(UserModel.username == form_data.username).first()
+        )
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,7 +67,7 @@ def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this username already exists",
         )
-    
+
     # Create new user
     hashed_password = get_password_hash(user_in.password)
     db_user = UserModel(
@@ -78,7 +80,7 @@ def register(
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
+
     return db_user
 
 
@@ -91,7 +93,7 @@ def generate_api_token(
     """
     # Generate a long-lived token (30 days)
     api_token_expires = timedelta(days=30)
-    
+
     return {
         "access_token": create_access_token(
             current_user.id, expires_delta=api_token_expires

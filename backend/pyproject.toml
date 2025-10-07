@@ -36,3 +36,21 @@ line-length = 88
 python_version = "3.9"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--log-cli-level=DEBUG",
+    "--log-cli-format=%(levelname)s: %(name)s - %(message)s",
+    "--capture=no"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]

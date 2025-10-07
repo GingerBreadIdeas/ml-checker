@@ -44,7 +44,7 @@ export function MessageDetail() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${id}?project_name=default`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -103,7 +103,7 @@ export function MessageDetail() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}?project_name=default`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -128,7 +128,7 @@ export function MessageDetail() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}?project_name=default`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

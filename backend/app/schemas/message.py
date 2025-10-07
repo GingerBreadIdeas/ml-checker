@@ -9,7 +9,9 @@ class ChatMessageBase(BaseModel):
     content: str
     session_id: Optional[str] = None
 
+
 class ChatMessageCreate(ChatMessageBase):
+    # project_id is determined by the API token, not from request body
     pass
 
 
@@ -17,9 +19,11 @@ class ChatMessageUpdate(BaseModel):
     is_prompt_injection: bool
 
 
-class ChatMessage(ChatMessageBase):
+class ChatMessage(BaseModel):
     id: int
+    content: str
     session_id: Optional[str] = None
+    project_id: int
     created_at: datetime
     response: Optional[str] = None
     is_prompt_injection: bool = False

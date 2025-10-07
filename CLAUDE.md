@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Frontend Dev: `cd frontend && npm run dev`
 - Frontend Build: `cd frontend && npm run build`
 - Frontend Lint: `cd frontend && npm run lint`
-- Backend Run: `cd backend && uv pip install -r requirements.txt && uvicorn app.main:app --reload`
+- Backend Run: `cd backend && uv pip install -r requirements.txt && uvicorn app.main:app --reload --log-config=logging_config.yaml`
 - Backend Format: `cd backend && black app`
 - Backend Type Check: `cd backend && mypy app`
 - Backend Test: `cd backend && pytest tests/`

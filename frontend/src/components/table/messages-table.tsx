@@ -72,7 +72,7 @@ export function MessagesTable({
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/chat/messages?skip=0&limit=50', {
+      const response = await fetch('http://localhost:8000/api/v1/chat/messages?project_name=default&skip=0&limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -10,10 +10,11 @@ bcrypt==3.2.2  # Pin to a specific version that works well with passlib
 python-multipart>=0.0.5
 email-validator>=2.0.0
 transformers>=4.20.0
-torch==2.1.0
+# torch==2.1.0
 numpy==1.24.4
 scikit-learn>=1.0.0
 bokeh>=3.0.0
 confluent-kafka
 alembic>=1.11.0
 sqladmin>=0.15.0
+loguru>=0.7.0
