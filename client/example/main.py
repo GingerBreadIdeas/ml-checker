@@ -15,6 +15,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaLLM
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
+from langchain_core.language_models.fake import FakeListLLM
 
 sys.path.append("..")
 from src.client import CheckerCallbackHandler
@@ -72,10 +73,16 @@ def main():
     mlchecker_handler = CheckerCallbackHandler()
 
     embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    llm = OllamaLLM(
-        model="mistral:7b",
-        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-    )
+    fake = True
+    if fake:
+        text_list = ["AAAAAAAAAAAAAAAAAAAAAAAAAAaaa"]
+        llm = FakeListLLM(text_list)
+    else:
+        llm = OllamaLLM(
+            model="mistral:7b",
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        )
+
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
