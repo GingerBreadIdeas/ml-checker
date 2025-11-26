@@ -10,10 +10,9 @@ from ..deps import get_current_user
 from ..models import Prompt
 from ..models import User
 from ..kafka_producer import get_kafka_producer
-import logging
+from loguru import logger
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, Field, validator
 from typing import Dict, Any, Optional as PydanticOptional
@@ -126,25 +125,12 @@ def list_prompts(
     limit: int = Query(100, ge=1, le=1000, description="Return this many items"),
     checked_only: bool = Query(False, description="Show only checked prompts"),
 ) -> Any:
-    """
-    List prompts for the current user.
 
-    Returns a paginated list of prompts submitted by the current user.
-    Can filter to show only checked prompts.
-    """
-    # Base query
     query = db.query(Prompt).filter(Prompt.user_id == current_user.id)
-
-    # Apply filter for checked prompts if requested
     if checked_only:
         query = query.filter(Prompt.checked == True)
-
-    # Get total count
     total = query.count()
-
-    # Apply pagination and order by created_at (newest first)
     prompts = query.order_by(Prompt.created_at.desc()).offset(skip).limit(limit).all()
-
     return {"prompts": prompts, "total": total}
 
 

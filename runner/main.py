@@ -1,7 +1,7 @@
 import json
 import os
 from confluent_kafka import Consumer, Producer
-from garak_runner import work
+from runner import work
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 import torch
 
@@ -57,7 +57,7 @@ def upload_metrics(msg: dict, metrics: dict):
     except Exception as e:
         print(f"Error sending results to Kafka: {e}")
 
-def calculate_metrics(message) -> dict(str):
+def calculate_metrics(message) -> dict:
     """
      Respones:
     {'label': 'INJECTION', 'score': 0.9999992847442627}
