@@ -15,12 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv
 RUN pip install uv
 
-# Install NumPy first to avoid compatibility issues
-RUN pip install numpy==1.24.0
-
-# Pre-install PyTorch to save build time (CPU-only version)
-RUN pip install torch==2.1.0 --extra-index-url https://download.pytorch.org/whl/cpu --no-cache-dir
-
 # Create directories for Hugging Face cache
 RUN mkdir -p /root/.cache/huggingface
 RUN mkdir -p /root/.huggingface
@@ -28,10 +22,10 @@ RUN mkdir -p /root/.huggingface
 # Copy requirements file
 COPY requirements.txt .
 
+
 # Install other dependencies, excluding torch which we've already installed
-RUN grep -v -E "torch|torchvision|torchaudio" requirements.txt > requirements_no_torch.txt && \
-    uv pip install --system -r requirements_no_torch.txt && \
-    rm requirements_no_torch.txt
+RUN uv pip install --system torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+RUN uv pip install --system -r requirements.txt
 
 # Copy application code
 COPY . .

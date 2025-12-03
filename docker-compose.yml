@@ -32,6 +32,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - app-network
 
@@ -48,22 +50,24 @@ services:
     networks:
       - app-network
 
-  # 👇 migration service you can attach to and run alembic
+  # 👇 migration service runs automatically
   migrate:
     build: ./backend
     # don't auto-start with `up` unless you ask for it
-    profiles: ["ops"]
+    # profiles: ["ops"]
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres/ml-checker
     # keep the container alive so you can exec into it
-    command: ["bash", "-lc", "sleep infinity"]
+    # command: ["bash", "-lc", "sleep infinity"]
+    command: ["alembic", "upgrade", "head"]
     volumes:
       - ./backend:/app
     networks:
       - app-network
+    restart: "no"
 
 volumes:
   postgres_data:
