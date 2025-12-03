@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, verify_project_access
 from ..models import Prompt
-from ..models import User
+from ..models import User, UserRole
 from ..kafka_producer import get_kafka_producer
 from loguru import logger
 
@@ -37,6 +37,11 @@ class PromptCheckMessageIn(BaseModel):
         example="deepseek-r1:1.5b",
         description="Model identifier to use for checking",
     )
+    project_id: int = Field(
+        ...,
+        example=1,
+        description="Project ID to associate the prompt check with",
+    )
     model_supplier: str = Field(
         "ollama", example="ollama", description="Model supplier (default: ollama)"
     )
@@ -63,7 +68,7 @@ class PromptListResponse(BaseModel):
     total: int
 
 
-@router.post("/prompt_check")
+@router.post("/")
 def prompt_check(
     *,
     db: Session = Depends(get_db),
@@ -85,9 +90,12 @@ def prompt_check(
         "probe": message_in.probe,
     }
 
+    # Verify user has access to the project
+    verify_project_access(db, current_user, message_in.project_id)
+
     # Create the database record
     prompt = Prompt(
-        user_id=current_user.id,
+        project_id=message_in.project_id,
         content=dict(data),
     )
     db.add(prompt)
@@ -116,17 +124,21 @@ def prompt_check(
     return prompt
 
 
-@router.get("/prompt_check", response_model=PromptListResponse)
+@router.get("/", response_model=PromptListResponse)
 def list_prompts(
     *,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    project_id: int = Query(..., description="Project ID to filter by"),
     skip: int = Query(0, ge=0, description="Skip this many items"),
     limit: int = Query(100, ge=1, le=1000, description="Return this many items"),
     checked_only: bool = Query(False, description="Show only checked prompts"),
 ) -> Any:
 
-    query = db.query(Prompt).filter(Prompt.user_id == current_user.id)
+    # Verify user has access to this project
+    verify_project_access(db, current_user, project_id)
+
+    query = db.query(Prompt).filter(Prompt.project_id == project_id)
     if checked_only:
         query = query.filter(Prompt.checked == True)
     total = query.count()
@@ -134,7 +146,7 @@ def list_prompts(
     return {"prompts": prompts, "total": total}
 
 
-@router.get("/prompt_check/{prompt_id}", response_model=PromptCheckOut)
+@router.get("/{prompt_id}", response_model=PromptCheckOut)
 def get_prompt(
     *,
     db: Session = Depends(get_db),
@@ -147,21 +159,19 @@ def get_prompt(
     Returns details about a prompt, including check results if available.
     Only allows access to prompts owned by the current user.
     """
-    prompt = (
-        db.query(Prompt)
-        .filter(Prompt.id == prompt_id, Prompt.user_id == current_user.id)
-        .first()
-    )
+    prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
 
     if not prompt:
         from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Prompt not found")
+
+    # Verify user has access to this prompt's project
+    verify_project_access(db, current_user, prompt.project_id)
 
     return prompt
 
 
-@router.delete("/prompt_check/{prompt_id}")
+@router.delete("/{prompt_id}")
 def delete_prompt(
     *,
     db: Session = Depends(get_db),
@@ -173,16 +183,14 @@ def delete_prompt(
 
     Only allows deletion of prompts owned by the current user.
     """
-    prompt = (
-        db.query(Prompt)
-        .filter(Prompt.id == prompt_id, Prompt.user_id == current_user.id)
-        .first()
-    )
+    prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
 
     if not prompt:
         from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Prompt not found")
+
+    # Verify user has access to this prompt's project
+    verify_project_access(db, current_user, prompt.project_id)
 
     db.delete(prompt)
     db.commit()

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from .core.config import settings
 from .core.security import ALGORITHM, verify_project_token
 from .database import get_db as get_db_base
-from .models import User, Project, ProjectToken
+from .models import User, Project, ProjectToken, UserRole
 from .schemas.user import TokenPayload
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
@@ -164,3 +164,26 @@ def get_current_user_or_project(
         detail="Invalid token",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def verify_project_access(db: Session, user: User, project_id: int) -> None:
+    """Verify that a user has access to a specific project.
+
+    Args:
+        db: Database session
+        user: The current user
+        project_id: The project ID to check access for
+
+    Raises:
+        HTTPException: If user doesn't have access to the project
+    """
+    user_role = db.query(UserRole).filter(
+        UserRole.user_id == user.id,
+        UserRole.project_id == project_id
+    ).first()
+
+    if not user_role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this project"
+        )

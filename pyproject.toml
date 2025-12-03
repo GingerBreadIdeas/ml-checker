@@ -15,4 +15,5 @@ profile = "black"
 [tool.uv.workspace]
 members = [
     "runner",
+    "scripts",
 ]

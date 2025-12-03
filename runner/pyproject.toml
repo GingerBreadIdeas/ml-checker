@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     "confluent-kafka>=2.12.2",
-    "garak>=0.13.1",
+    "garak<=0.10",
     "transformers>=4.57.3",
 ]
 

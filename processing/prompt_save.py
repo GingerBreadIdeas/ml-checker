@@ -6,10 +6,19 @@ import os
 from pathlib import Path
 import time
 from confluent_kafka import Consumer
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, Boolean, create_engine
+from sqlalchemy import (
+    Column,
+    Integer,
+    Text,
+    DateTime,
+    ForeignKey,
+    Boolean,
+    JSON,
+    create_engine,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
-from sqlalchemy.orm import sessionmaker, relationship, declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Database configuration
 DB_USER = os.environ.get('DB_USER', 'postgres')
@@ -27,15 +36,19 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Use the newer recommended approach to avoid the warning
 Base = declarative_base()
 
+# Use JSON everywhere, swapping to JSONB only on Postgres
+JSONPortable = JSON().with_variant(JSONB, "postgresql")
+
 # Define Prompt model directly in this file
 class Prompt(Base):
     __tablename__ = "prompt_check"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
-    created_at = Column(DateTime(timezone=True))
-    content = Column(JSONB)
-    check_results = Column(JSONB, nullable=True)
+    # ForeignKey omitted because we don't load the projects table metadata here
+    project_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    content = Column(JSONPortable)
+    check_results = Column(JSONPortable, nullable=True)
     checked = Column(Boolean, default=False)
 
 
@@ -43,7 +56,8 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    # ForeignKey omitted because this lightweight model doesn't define users
+    user_id = Column(Integer, index=True)
     content = Column(Text, nullable=False)
     response = Column(Text, nullable=True)  # Optional response from chatbot
     is_prompt_injection = Column(Boolean, default=False)  # Flag for prompt injection attacks

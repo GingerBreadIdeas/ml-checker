@@ -5,6 +5,7 @@ interface PromptCheckForm {
   model_id: string;
   model_supplier: string;
   probe: string;
+  project_id: number;
 }
 
 interface PromptTest {
@@ -27,7 +28,8 @@ const Prompt: React.FC = () => {
     prompt_text: '',
     model_id: 'deepseek-r1:1.5b',
     model_supplier: 'ollama',
-    probe: 'promptinject.HijackHateHumansMini'
+    probe: 'promptinject.HijackHateHumansMini',
+    project_id: 1
   });
   const [promptTests, setPromptTests] = useState<PromptTest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +44,7 @@ const Prompt: React.FC = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt_check`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check?project_id=1`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -174,7 +176,7 @@ const Prompt: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/v1/prompt_check`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -214,7 +216,8 @@ const Prompt: React.FC = () => {
       prompt_text: '',
       model_id: 'deepseek-r1:1.5b',
       model_supplier: 'ollama',
-      probe: 'promptinject.HijackHateHumansMini'
+      probe: 'promptinject.HijackHateHumansMini',
+      project_id: 1
     });
   };
 
@@ -227,7 +230,7 @@ const Prompt: React.FC = () => {
     setDeletingId(testId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt_check/${testId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check/${testId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -507,7 +510,8 @@ const Prompt: React.FC = () => {
                                         prompt_text: test.content.prompt || '',
                                         model_id: test.content.model_id || 'deepseek-r1:1.5b',
                                         model_supplier: test.content.model_supplier || 'ollama',
-                                        probe: test.content.probe || 'promptinject.HijackHateHumansMini'
+                                        probe: test.content.probe || 'promptinject.HijackHateHumansMini',
+                                        project_id: 1
                                       });
                                       setActiveTab('prepare');
                                     }}
