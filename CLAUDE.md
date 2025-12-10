@@ -8,7 +8,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Frontend Lint: `cd frontend && npm run lint`
 - Backend Run: `cd backend && uv pip install -r requirements.txt && uvicorn app.main:app --reload --log-config=logging_config.yaml`
 - Backend Format: `cd backend && black app`
-- Backend Type Check: `cd backend && mypy app`
 - Backend Test: `cd backend && pytest tests/`
 - Run Single Test: `cd backend && pytest tests/path_to_test.py::test_name`
 - Backend Venv: `cd backend && uv venv .venv && source .venv/bin/activate`

@@ -2,24 +2,25 @@
 SQLAlchemy models for the ML-Checker application.
 """
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    Integer,
-    String,
-    Text,
-    DateTime,
-    ForeignKey,
-    Enum,
-    Table,
-    JSON,
-)
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
-from sqlalchemy import event
 import enum
 import uuid
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+    event,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from .database import Base
 
@@ -39,7 +40,10 @@ chat_message_tag_association = Table(
     "chat_message_tags",
     Base.metadata,
     Column(
-        "chat_message_id", Integer, ForeignKey("chat_messages.id"), primary_key=True
+        "chat_message_id",
+        Integer,
+        ForeignKey("chat_messages.id"),
+        primary_key=True,
     ),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
@@ -47,7 +51,9 @@ chat_message_tag_association = Table(
 prompt_tag_association = Table(
     "prompt_tags",
     Base.metadata,
-    Column("prompt_id", Integer, ForeignKey("prompt_check.id"), primary_key=True),
+    Column(
+        "prompt_id", Integer, ForeignKey("prompt_check.id"), primary_key=True
+    ),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
 
@@ -104,10 +110,14 @@ class ProjectToken(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     token_hash = Column(String, unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True)
-    expires_at = Column(DateTime(timezone=True), nullable=True)  # Optional expiration
+    expires_at = Column(
+        DateTime(timezone=True), nullable=True
+    )  # Optional expiration
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_used_at = Column(DateTime(timezone=True), nullable=True)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by_user_id = Column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
 
     # Relationships
     project = relationship("Project", back_populates="tokens")
@@ -133,7 +143,9 @@ class User(Base):
         "UserRole", back_populates="user", cascade="all, delete-orphan"
     )
     created_tokens = relationship("ProjectToken", back_populates="created_by")
-    tags = relationship("Tag", secondary=user_tag_association, back_populates="users")
+    tags = relationship(
+        "Tag", secondary=user_tag_association, back_populates="users"
+    )
 
 
 class UserRole(Base):
@@ -154,20 +166,26 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(String, nullable=True)  # Simple string session identifier
+    session_id = Column(
+        String, nullable=True
+    )  # Simple string session identifier
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     content = Column(Text, nullable=False)
     response = Column(Text, nullable=True)  # Optional response from chatbot
     is_prompt_injection = Column(
         Boolean, default=False
     )  # Flag for prompt injection attacks
-    metrics = Column(JSONPortable)  # JSON column for metrics (JSONB on PostgreSQL)
+    metrics = Column(
+        JSONPortable
+    )  # JSON column for metrics (JSONB on PostgreSQL)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     project = relationship("Project", back_populates="chat_messages")
     tags = relationship(
-        "Tag", secondary=chat_message_tag_association, back_populates="chat_messages"
+        "Tag",
+        secondary=chat_message_tag_association,
+        back_populates="chat_messages",
     )
 
 
@@ -202,12 +220,16 @@ class Tag(Base):
     )
 
     # Many-to-many relationships
-    users = relationship("User", secondary=user_tag_association, back_populates="tags")
+    users = relationship(
+        "User", secondary=user_tag_association, back_populates="tags"
+    )
     projects = relationship(
         "Project", secondary=project_tag_association, back_populates="tags"
     )
     chat_messages = relationship(
-        "ChatMessage", secondary=chat_message_tag_association, back_populates="tags"
+        "ChatMessage",
+        secondary=chat_message_tag_association,
+        back_populates="tags",
     )
     prompts = relationship(
         "Prompt", secondary=prompt_tag_association, back_populates="tags"
@@ -221,7 +243,10 @@ def create_default_project(mapper, connection, target):
     Automatically create a default project for new users
     """
     project_insert = Project.__table__.insert().values(
-        name="default", description="Default project", is_default=True, is_active=True
+        name="default",
+        description="Default project",
+        is_default=True,
+        is_active=True,
     )
 
     result = connection.execute(project_insert)

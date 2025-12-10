@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pre-commit>=4.5.0",
+    "black>=23.3.0",
+    "pytest>=7.3.1",
+    "isort>=7.0.0",
+]
 
 
 [tool.black]

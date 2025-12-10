@@ -1,18 +1,27 @@
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 import logging
 
-from .routes import api_router
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
 from .core.config import settings
 from .database import Base, get_db
 from .init_db import init_db
 from .kafka_producer import (
-    init_kafka_producer,
     close_kafka_producer,
     get_kafka_producer,
+    init_kafka_producer,
 )
-from .models import User, Project, UserRole, ChatMessage, Prompt, Tag, ProjectToken
+from .models import (
+    ChatMessage,
+    Project,
+    ProjectToken,
+    Prompt,
+    Tag,
+    User,
+    UserRole,
+)
+from .routes import api_router
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +74,9 @@ async def startup_event():
     try:
         init_kafka_producer()
         if get_kafka_producer() is not None:
-            logger.info("Kafka connection successful - prompt checks will be processed")
+            logger.info(
+                "Kafka connection successful - prompt checks will be processed"
+            )
         else:
             logger.warning(
                 "Kafka connection failed - prompt checks will NOT be processed"

@@ -3,6 +3,7 @@ import logging
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -10,9 +11,11 @@ from ..deps import get_current_user, get_project_from_token
 from ..kafka_producer import get_kafka_producer
 from ..models import ChatMessage, Project, User, UserRole
 from ..schemas.message import ChatMessage as ChatMessageSchema
-from ..schemas.message import ChatMessageCreate, ChatMessageList, ChatMessageUpdate
-
-from loguru import logger
+from ..schemas.message import (
+    ChatMessageCreate,
+    ChatMessageList,
+    ChatMessageUpdate,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -32,7 +35,8 @@ def get_project_with_access(
     """
     if not project_id and not project_name:
         raise HTTPException(
-            status_code=400, detail="Either project_id or project_name must be provided"
+            status_code=400,
+            detail="Either project_id or project_name must be provided",
         )
 
     if project_id and project_name:
@@ -46,7 +50,8 @@ def get_project_with_access(
         user_role = (
             db.query(UserRole)
             .filter(
-                UserRole.user_id == current_user.id, UserRole.project_id == project_id
+                UserRole.user_id == current_user.id,
+                UserRole.project_id == project_id,
             )
             .first()
         )
@@ -54,7 +59,10 @@ def get_project_with_access(
         user_role = (
             db.query(UserRole)
             .join(Project)
-            .filter(UserRole.user_id == current_user.id, Project.name == project_name)
+            .filter(
+                UserRole.user_id == current_user.id,
+                Project.name == project_name,
+            )
             .first()
         )
 
@@ -69,7 +77,9 @@ def get_project_with_access(
 def trigger_metrics_computation(message: ChatMessage, metrics_options):
     producer = get_kafka_producer()
     if producer is None:
-        logger.warning("Kafka is not available. Prompt check will not be processed.")
+        logger.warning(
+            "Kafka is not available. Prompt check will not be processed."
+        )
         return
 
     message_data = {
@@ -78,7 +88,8 @@ def trigger_metrics_computation(message: ChatMessage, metrics_options):
         "options": metrics_options,
     }
     producer.produce(
-        "compute_message_metrics", value=json.dumps(message_data).encode("utf-8")
+        "compute_message_metrics",
+        value=json.dumps(message_data).encode("utf-8"),
     )
     producer.poll(0)  # Process delivery reports
     logger.info(f"Successfully sent prompt {message.id} to Kafka for checking")
@@ -134,7 +145,9 @@ def read_messages(
     User must have access to the project.
     Specify either project_id or project_name.
     """
-    project = get_project_with_access(db, current_user, project_id, project_name)
+    project = get_project_with_access(
+        db, current_user, project_id, project_name
+    )
     logger.info(f"Project: {project.id}")
 
     # Get all messages for this project
@@ -174,7 +187,9 @@ def read_messages_by_token(
     return {"messages": messages}
 
 
-@router.delete("/project-messages/{message_id}", response_model=ChatMessageSchema)
+@router.delete(
+    "/project-messages/{message_id}", response_model=ChatMessageSchema
+)
 def delete_message_by_token(
     *,
     db: Session = Depends(get_db),
@@ -187,7 +202,9 @@ def delete_message_by_token(
     # Get message by ID within the project
     message = (
         db.query(ChatMessage)
-        .filter(ChatMessage.id == message_id, ChatMessage.project_id == project.id)
+        .filter(
+            ChatMessage.id == message_id, ChatMessage.project_id == project.id
+        )
         .first()
     )
     if not message:
@@ -215,12 +232,16 @@ def read_message(
     Get a specific chat message by ID (must belong to user's project).
     Specify either project_id or project_name.
     """
-    project = get_project_with_access(db, current_user, project_id, project_name)
+    project = get_project_with_access(
+        db, current_user, project_id, project_name
+    )
 
     # Get message by ID within the specified project
     message = (
         db.query(ChatMessage)
-        .filter(ChatMessage.id == message_id, ChatMessage.project_id == project.id)
+        .filter(
+            ChatMessage.id == message_id, ChatMessage.project_id == project.id
+        )
         .first()
     )
     if not message:
@@ -245,12 +266,16 @@ def delete_message(
     Delete a chat message.
     Specify either project_id or project_name.
     """
-    project = get_project_with_access(db, current_user, project_id, project_name)
+    project = get_project_with_access(
+        db, current_user, project_id, project_name
+    )
 
     # Get message by ID within the specified project
     message = (
         db.query(ChatMessage)
-        .filter(ChatMessage.id == message_id, ChatMessage.project_id == project.id)
+        .filter(
+            ChatMessage.id == message_id, ChatMessage.project_id == project.id
+        )
         .first()
     )
     if not message:
@@ -279,12 +304,16 @@ def update_message(
     Update a chat message's is_prompt_injection flag.
     Specify either project_id or project_name.
     """
-    project = get_project_with_access(db, current_user, project_id, project_name)
+    project = get_project_with_access(
+        db, current_user, project_id, project_name
+    )
 
     # Get message by ID within the specified project
     message = (
         db.query(ChatMessage)
-        .filter(ChatMessage.id == message_id, ChatMessage.project_id == project.id)
+        .filter(
+            ChatMessage.id == message_id, ChatMessage.project_id == project.id
+        )
         .first()
     )
     if not message:

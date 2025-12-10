@@ -1,7 +1,7 @@
-from typing import Generator, Optional, Union
 from datetime import datetime
+from typing import Generator, Optional, Union
 
-from fastapi import Depends, HTTPException, status, Header
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from jose.exceptions import JWTError
@@ -11,10 +11,12 @@ from sqlalchemy.orm import Session
 from .core.config import settings
 from .core.security import ALGORITHM, verify_project_token
 from .database import get_db as get_db_base
-from .models import User, Project, ProjectToken, UserRole
+from .models import Project, ProjectToken, User, UserRole
 from .schemas.user import TokenPayload
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/auth/login"
+)
 
 
 def get_db() -> Generator:
@@ -29,7 +31,9 @@ def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> User:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
         token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):
         raise HTTPException(
@@ -87,7 +91,9 @@ def get_project_from_token(
         )
 
     # Try to find matching project token
-    project_tokens = db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+    project_tokens = (
+        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+    )
 
     for pt in project_tokens:
         if verify_project_token(token, pt.token_hash):
@@ -138,7 +144,9 @@ def get_current_user_or_project(
 
     # First try JWT (user authentication)
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
         token_data = TokenPayload(**payload)
         user = db.query(User).filter(User.id == token_data.sub).first()
         if user and user.is_active:
@@ -147,7 +155,9 @@ def get_current_user_or_project(
         pass
 
     # Then try project token
-    project_tokens = db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+    project_tokens = (
+        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+    )
 
     for pt in project_tokens:
         if verify_project_token(token, pt.token_hash):
@@ -177,13 +187,14 @@ def verify_project_access(db: Session, user: User, project_id: int) -> None:
     Raises:
         HTTPException: If user doesn't have access to the project
     """
-    user_role = db.query(UserRole).filter(
-        UserRole.user_id == user.id,
-        UserRole.project_id == project_id
-    ).first()
+    user_role = (
+        db.query(UserRole)
+        .filter(UserRole.user_id == user.id, UserRole.project_id == project_id)
+        .first()
+    )
 
     if not user_role:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to this project"
+            detail="Access denied to this project",
         )

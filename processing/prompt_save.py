@@ -1,36 +1,39 @@
 #!/usr/bin/env python
 
 import json
-import sys
 import os
-from pathlib import Path
+import sys
 import time
+from pathlib import Path
+
 from confluent_kafka import Consumer
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
-    Integer,
-    Text,
     DateTime,
     ForeignKey,
-    Boolean,
-    JSON,
+    Integer,
+    Text,
     create_engine,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import func
-from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Database configuration
-DB_USER = os.environ.get('DB_USER', 'postgres')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', 'postgres')
-DB_HOST = os.environ.get('DB_HOST', 'localhost')
-DB_PORT = os.environ.get('DB_PORT', '5432')
-DB_NAME = os.environ.get('DB_NAME', 'ml-checker')
+DB_USER = os.environ.get("DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "postgres")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_NAME = os.environ.get("DB_NAME", "ml-checker")
 
 print(f"Starting prompt_save script with DB configuration:")
 print(f"DB_HOST: {DB_HOST}, DB_PORT: {DB_PORT}, DB_NAME: {DB_NAME}")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = (
+    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Use the newer recommended approach to avoid the warning
@@ -38,6 +41,7 @@ Base = declarative_base()
 
 # Use JSON everywhere, swapping to JSONB only on Postgres
 JSONPortable = JSON().with_variant(JSONB, "postgresql")
+
 
 # Define Prompt model directly in this file
 class Prompt(Base):
@@ -60,19 +64,22 @@ class ChatMessage(Base):
     user_id = Column(Integer, index=True)
     content = Column(Text, nullable=False)
     response = Column(Text, nullable=True)  # Optional response from chatbot
-    is_prompt_injection = Column(Boolean, default=False)  # Flag for prompt injection attacks
+    is_prompt_injection = Column(
+        Boolean, default=False
+    )  # Flag for prompt injection attacks
     metrics = Column(JSONB)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 
 def save_prompt_results(prompt_data, results_data):
     db = SessionLocal()
     try:
         # Get the prompt by ID from the original data
-        prompt_id = prompt_data.get('id')
+        prompt_id = prompt_data.get("id")
         if not prompt_id:
             print("Error: No prompt ID found in data")
             return
-            
+
         # Query by ID explicitly
         prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
         if prompt:
@@ -82,27 +89,30 @@ def save_prompt_results(prompt_data, results_data):
             print(f"Updated prompt with id: {prompt_id}")
         else:
             print(f"No prompt found with id: {prompt_id}")
-        
+
     except Exception as e:
         db.rollback()
         print(f"Error saving prompt results: {e}")
     finally:
         db.close()
 
+
 def save_message_metrics(data):
     db = SessionLocal()
     try:
-        message_id = data.get('id')
-        metrics = data.get('metrics')
-        options = data.get('options')
+        message_id = data.get("id")
+        metrics = data.get("metrics")
+        options = data.get("options")
         if not message_id:
             print("Error: No message ID found in data")
             return
 
         # Query by ID explicitly
-        message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+        message = (
+            db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+        )
         if message:
-            message.metrics = {"metrics": metrics, "options":options}
+            message.metrics = {"metrics": metrics, "options": options}
             db.commit()
             print(f"Updated message with id: {message_id}")
         else:
@@ -115,9 +125,8 @@ def save_message_metrics(data):
         db.close()
 
 
-
 def process_kafka_message(msg):
-    data = json.loads(msg.value().decode('utf-8'))
+    data = json.loads(msg.value().decode("utf-8"))
     if data.get("init", False):
         # just initialising the queue
         return
@@ -140,51 +149,53 @@ def process_kafka_message(msg):
             save_message_metrics(data)
 
 
-
 if __name__ == "__main__":
     # Kafka configuration
-    kafka_host = os.environ.get('KAFKA_HOST', 'localhost')
-    kafka_port = os.environ.get('KAFKA_PORT', '9092')
+    kafka_host = os.environ.get("KAFKA_HOST", "localhost")
+    kafka_port = os.environ.get("KAFKA_PORT", "9092")
     bootstrap_servers = f"{kafka_host}:{kafka_port}"
-    
+
     print(f"All environment variables:")
     for key, value in sorted(os.environ.items()):
         print(f"  {key}: {value}")
-    
+
     print(f"Connecting to Kafka at {bootstrap_servers}")
     print(f"Using database at {DATABASE_URL}")
-    
+
     # Attempt to resolve Kafka hostname for debugging
     try:
         import socket
+
         print(f"Attempting to resolve {kafka_host}...")
         ip_address = socket.gethostbyname(kafka_host)
         print(f"Resolved {kafka_host} to {ip_address}")
     except Exception as e:
         print(f"Unable to resolve {kafka_host}: {e}")
-    
+
     # Create Kafka consumer with improved settings for Docker networking
     consumer_config = {
-        'bootstrap.servers': bootstrap_servers,
-        'group.id': 'prompt-save-consumer',
-        'auto.offset.reset': 'earliest',
-        'socket.timeout.ms': 30000,  # 30 second timeout
-        'session.timeout.ms': 45000,  # 45 second timeout
-        'request.timeout.ms': 60000,  # 60 second timeout
-        'max.poll.interval.ms': 300000,  # 5 minutes
-        'heartbeat.interval.ms': 15000,  # 15 seconds
-        'reconnect.backoff.ms': 1000,  # 1 second initial backoff
-        'reconnect.backoff.max.ms': 10000,  # 10 seconds maximum backoff
-        'retry.backoff.ms': 500  # 500ms retry backoff
+        "bootstrap.servers": bootstrap_servers,
+        "group.id": "prompt-save-consumer",
+        "auto.offset.reset": "earliest",
+        "socket.timeout.ms": 30000,  # 30 second timeout
+        "session.timeout.ms": 45000,  # 45 second timeout
+        "request.timeout.ms": 60000,  # 60 second timeout
+        "max.poll.interval.ms": 300000,  # 5 minutes
+        "heartbeat.interval.ms": 15000,  # 15 seconds
+        "reconnect.backoff.ms": 1000,  # 1 second initial backoff
+        "reconnect.backoff.max.ms": 10000,  # 10 seconds maximum backoff
+        "retry.backoff.ms": 500,  # 500ms retry backoff
     }
     print(f"Consumer config: {consumer_config}")
-    
+
     # Retry loop for creating consumer
     max_retries = 5
     retry_delay = 10  # seconds
     for attempt in range(max_retries):
         try:
-            print(f"Creating Kafka consumer (attempt {attempt+1}/{max_retries})...")
+            print(
+                f"Creating Kafka consumer (attempt {attempt+1}/{max_retries})..."
+            )
             consumer = Consumer(consumer_config)
             print("Consumer created successfully")
             break
@@ -193,6 +204,7 @@ if __name__ == "__main__":
             if attempt < max_retries - 1:
                 print(f"Retrying in {retry_delay} seconds...")
                 import time
+
                 time.sleep(retry_delay)
                 retry_delay *= 2  # Exponential backoff
             else:
@@ -200,7 +212,7 @@ if __name__ == "__main__":
                 sys.exit(1)
 
     # Subscribe to the save_prompt_check topic
-    consumer.subscribe(['save_prompt_check', "save_message_metrics"])
+    consumer.subscribe(["save_prompt_check", "save_message_metrics"])
     print("Subscribed to topic: save_prompt_check")
     print("Waiting for messages...")
 
@@ -218,7 +230,7 @@ if __name__ == "__main__":
                     print(f"Received non-JSON message, ignoring")
                 except Exception as e:
                     print(f"Error processing message: {e}")
-                    
+
     except KeyboardInterrupt:
         print("\nExiting...")
     finally:

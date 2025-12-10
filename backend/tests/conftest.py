@@ -4,21 +4,19 @@ import os
 os.environ["TEST_ENV"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
+import app.admin
+
+# Import and patch the database module to use our test engine
+import app.database
 import pytest
+from app.core.security import create_access_token, generate_project_token
+from app.database import Base, get_db
+from app.main import app as fastapi_app
+from app.models import Project, ProjectToken, RoleType, User, UserRole
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
-from app.main import app as fastapi_app
-from app.database import get_db, Base
-from app.models import User, Project, UserRole, RoleType, ProjectToken
-from app.core.security import create_access_token, generate_project_token
-
-# Import and patch the database module to use our test engine
-import app.database
-import app.admin
-
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -26,13 +24,16 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
-    future=True,#!
+    future=True,  #!
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine
+)
 
 # Patch the app's database module to use our test engine
 app.database.engine = engine
 app.database.SessionLocal = TestingSessionLocal
+
 
 @pytest.fixture(scope="function")
 def db(tmp_path):
@@ -42,7 +43,9 @@ def db(tmp_path):
     """
     db_path = tmp_path / "test.db"
     url = f"sqlite+pysqlite:///{db_path}"
-    engine = create_engine(url, connect_args={"check_same_thread": False}, future=True)
+    engine = create_engine(
+        url, connect_args={"check_same_thread": False}, future=True
+    )
 
     # Build schema from models
     Base.metadata.create_all(engine)
@@ -59,6 +62,7 @@ def db(tmp_path):
     # (Only if you actually have app.database.SessionLocal / engine globals)
     try:
         import app.database as dbmod
+
         dbmod.engine = engine
         dbmod.SessionLocal = TestingSessionLocal
     except Exception:
@@ -74,11 +78,13 @@ def db(tmp_path):
         engine.dispose()
         # tmp_path cleanup handled by pytest
 
+
 @pytest.fixture(scope="function")
 def client(db):
     """
     Route all app DB usage through the same test Session by overriding get_db.
     """
+
     def override_get_db():
         yield db
 
@@ -89,13 +95,14 @@ def client(db):
     finally:
         fastapi_app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def test_user(db):
     user = User(
         username="testuser",
         email="test@example.com",
         hashed_password="hashed_password",
-        is_active=True
+        is_active=True,
     )
     db.add(user)
     db.commit()
@@ -109,7 +116,7 @@ def test_project(db, test_user):
         name="test_project",
         description="Test project for testing",
         is_default=True,
-        is_active=True
+        is_active=True,
     )
     db.add(project)
     db.commit()
@@ -117,9 +124,7 @@ def test_project(db, test_user):
 
     # Create user role to link user to project
     user_role = UserRole(
-        user_id=test_user.id,
-        project_id=project.id,
-        role=RoleType.ADMIN
+        user_id=test_user.id, project_id=project.id, role=RoleType.ADMIN
     )
     db.add(user_role)
     db.commit()
@@ -133,7 +138,7 @@ def test_user2(db):
         username="testuser2",
         email="test2@example.com",
         hashed_password="hashed_password",
-        is_active=True
+        is_active=True,
     )
     db.add(user)
     db.commit()
@@ -147,7 +152,7 @@ def test_project2(db, test_user2):
         name="test_project2",
         description="Second test project",
         is_default=False,  # Only test_project should be default
-        is_active=True
+        is_active=True,
     )
     db.add(project)
     db.commit()
@@ -155,9 +160,7 @@ def test_project2(db, test_user2):
 
     # Create user role to link user2 to project2
     user_role = UserRole(
-        user_id=test_user2.id,
-        project_id=project.id,
-        role=RoleType.ADMIN
+        user_id=test_user2.id, project_id=project.id, role=RoleType.ADMIN
     )
     db.add(user_role)
     db.commit()
@@ -192,7 +195,7 @@ def project_token(db, test_project, test_user):
         project_id=test_project.id,
         token_hash=token_hash,
         created_by_user_id=test_user.id,
-        is_active=True
+        is_active=True,
     )
     db.add(project_token)
     db.commit()
@@ -211,7 +214,7 @@ def project_token2(db, test_project2, test_user2):
         project_id=test_project2.id,
         token_hash=token_hash,
         created_by_user_id=test_user2.id,
-        is_active=True
+        is_active=True,
     )
     db.add(project_token)
     db.commit()

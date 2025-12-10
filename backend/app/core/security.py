@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
-from typing import Any, Union, Optional
-import secrets
 import hashlib
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Optional, Union
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -24,7 +24,9 @@ def create_access_token(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=ALGORITHM
+    )
     return encoded_jwt
 
 

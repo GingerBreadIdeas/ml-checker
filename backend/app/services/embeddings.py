@@ -1,9 +1,10 @@
-import os
-import torch
-import numpy as np
-from sklearn.manifold import TSNE
-from typing import List, Tuple
 import logging
+import os
+from typing import List, Tuple
+
+import numpy as np
+import torch
+from sklearn.manifold import TSNE
 
 # Set this environment variable to avoid parallelism-related warnings and errors
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -17,7 +18,7 @@ AutoModel = None
 TRANSFORMERS_AVAILABLE = False
 
 try:
-    from transformers import AutoTokenizer, AutoModel
+    from transformers import AutoModel, AutoTokenizer
 
     TRANSFORMERS_AVAILABLE = True
     logger.info("Successfully imported transformers")
@@ -48,7 +49,8 @@ if TRANSFORMERS_AVAILABLE:
 
 
 def create_embeddings(
-    texts: List[str], model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    texts: List[str],
+    model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
 ) -> np.ndarray:
     """
     Create embeddings for a list of texts using a pretrained transformer model.
@@ -94,7 +96,9 @@ def create_embeddings(
 
         # Mask the padding tokens and compute mean of token embeddings
         input_mask_expanded = (
-            attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+            attention_mask.unsqueeze(-1)
+            .expand(token_embeddings.size())
+            .float()
         )
         sentence_embeddings = torch.sum(
             token_embeddings * input_mask_expanded, 1
@@ -127,7 +131,9 @@ def reduce_to_2d(embeddings: np.ndarray, random_state: int = 42) -> np.ndarray:
     return tsne.fit_transform(embeddings)
 
 
-def create_2d_embeddings_for_texts(texts: List[str]) -> Tuple[np.ndarray, np.ndarray]:
+def create_2d_embeddings_for_texts(
+    texts: List[str],
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create embeddings for texts and reduce to 2D for visualization.
 

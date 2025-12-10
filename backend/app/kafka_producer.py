@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import os
 import logging
+import os
 import time
 from typing import Optional
+
 from confluent_kafka import Producer
 from confluent_kafka.cimpl import KafkaException
 

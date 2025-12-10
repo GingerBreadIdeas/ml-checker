@@ -1,10 +1,11 @@
 from fastapi import APIRouter
+
 from .auth import router as auth_router
 from .chat import router as chat_router
-from .users import router as users_router
 from .prompt_check import router as prompt_check_router
-from .visualization import router as visualization_router
 from .tokens import router as tokens_router
+from .users import router as users_router
+from .visualization import router as visualization_router
 
 api_router = APIRouter()
 

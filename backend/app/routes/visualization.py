@@ -1,30 +1,28 @@
-from typing import Any, List, Dict, Optional
-from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
+import logging
+from typing import Any, Dict, List, Optional
 
-from ..database import get_db
-from ..models import ChatMessage
-from ..models import User
-from ..deps import get_current_user
-from ..services.embeddings import create_embeddings, reduce_to_2d
-
-from bokeh.plotting import figure
+from bokeh.embed import file_html
 from bokeh.layouts import column, row
 from bokeh.models import (
+    BooleanFilter,
+    CDSView,
+    Circle,
     ColumnDataSource,
     DataTable,
-    TableColumn,
     HoverTool,
-    Circle,
     MultiLine,
-    CDSView,
-    BooleanFilter,
+    TableColumn,
 )
-from bokeh.embed import file_html
+from bokeh.plotting import figure
 from bokeh.resources import CDN
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-import logging
+from ..database import get_db
+from ..deps import get_current_user
+from ..models import ChatMessage, User
+from ..services.embeddings import create_embeddings, reduce_to_2d
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -49,7 +47,9 @@ def get_message_embeddings_data(
     """
     # Fetch messages for the current user
     messages = (
-        db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).all()
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == current_user.id)
+        .all()
     )
 
     if not messages:
@@ -64,11 +64,15 @@ def get_message_embeddings_data(
 
         # For debugging, limit the number of texts if there are many
         if len(texts) > 50:
-            logger.warning(f"Limiting to 50 texts out of {len(texts)} for performance")
+            logger.warning(
+                f"Limiting to 50 texts out of {len(texts)} for performance"
+            )
             texts = texts[:50]
 
         embeddings = create_embeddings(texts)
-        logger.info(f"Successfully created embeddings with shape {embeddings.shape}")
+        logger.info(
+            f"Successfully created embeddings with shape {embeddings.shape}"
+        )
 
         logger.info("Reducing embeddings to 2D with t-SNE")
         points_2d = reduce_to_2d(embeddings)
@@ -116,12 +120,15 @@ def get_message_embeddings_json(
     - Prompt injection messages displayed as red dots
     - Interactive tooltips showing message details
     """
-    from bokeh.embed import json_item
     import json
+
+    from bokeh.embed import json_item
 
     # Fetch messages for the current user
     messages = (
-        db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).all()
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == current_user.id)
+        .all()
     )
 
     if not messages:
@@ -130,7 +137,9 @@ def get_message_embeddings_json(
     # Extract text and metadata
     texts = [msg.content for msg in messages]
     message_ids = [msg.id for msg in messages]
-    created_dates = [msg.created_at.strftime("%Y-%m-%d %H:%M:%S") for msg in messages]
+    created_dates = [
+        msg.created_at.strftime("%Y-%m-%d %H:%M:%S") for msg in messages
+    ]
     is_prompt_injection = [msg.is_prompt_injection for msg in messages]
 
     # Truncate long messages for the data table (preserve full text for hover)
@@ -143,7 +152,9 @@ def get_message_embeddings_json(
 
         # Process for hover tooltip - escape special characters
         hover_text = text.replace("\n", " ").replace("\r", "")
-        hover_text = hover_text[:200] + "..." if len(hover_text) > 200 else hover_text
+        hover_text = (
+            hover_text[:200] + "..." if len(hover_text) > 200 else hover_text
+        )
         hover_texts.append(hover_text)
 
     # Create embeddings and reduce to 2D
@@ -170,7 +181,9 @@ def get_message_embeddings_json(
             "hover_text": hover_texts,  # For hover tooltips
             "date": created_dates,
             "is_injection": is_prompt_injection,
-            "color": ["#FF4136" if inj else "#0074D9" for inj in is_prompt_injection],
+            "color": [
+                "#FF4136" if inj else "#0074D9" for inj in is_prompt_injection
+            ],
             "size": [10 if inj else 8 for inj in is_prompt_injection],
         }
     )
@@ -216,14 +229,18 @@ def get_message_embeddings_json(
 
     legend = Legend(
         items=[
-            LegendItem(label="Regular Messages", renderers=[p.renderers[0]], index=0),
-            LegendItem(label="Prompt Injection", renderers=[p.renderers[0]], index=1),
+            LegendItem(
+                label="Regular Messages", renderers=[p.renderers[0]], index=0
+            ),
+            LegendItem(
+                label="Prompt Injection", renderers=[p.renderers[0]], index=1
+            ),
         ]
     )
     p.add_layout(legend, "right")
 
     # Create data table
-    from bokeh.models import DataTable, TableColumn, StringFormatter
+    from bokeh.models import DataTable, StringFormatter, TableColumn
 
     columns = [
         TableColumn(field="message_id", title="ID", width=60),
@@ -271,7 +288,9 @@ def get_message_embeddings_html(
     """
     # Fetch messages for the current user
     messages = (
-        db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).all()
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == current_user.id)
+        .all()
     )
 
     if not messages:
@@ -283,7 +302,9 @@ def get_message_embeddings_html(
     # Extract text and metadata
     texts = [msg.content for msg in messages]
     message_ids = [msg.id for msg in messages]
-    created_dates = [msg.created_at.strftime("%Y-%m-%d %H:%M:%S") for msg in messages]
+    created_dates = [
+        msg.created_at.strftime("%Y-%m-%d %H:%M:%S") for msg in messages
+    ]
     is_prompt_injection = [msg.is_prompt_injection for msg in messages]
 
     # Create embeddings and reduce to 2D
@@ -305,7 +326,9 @@ def get_message_embeddings_html(
             "message": texts,
             "date": created_dates,
             "is_injection": is_prompt_injection,
-            "color": ["#FF4136" if inj else "#0074D9" for inj in is_prompt_injection],
+            "color": [
+                "#FF4136" if inj else "#0074D9" for inj in is_prompt_injection
+            ],
             "size": [10 if inj else 8 for inj in is_prompt_injection],
         }
     )
@@ -347,8 +370,12 @@ def get_message_embeddings_html(
     regular_filter = [not inj for inj in is_prompt_injection]
     injection_filter = is_prompt_injection
 
-    regular_view = CDSView(source=source, filters=[BooleanFilter(regular_filter)])
-    injection_view = CDSView(source=source, filters=[BooleanFilter(injection_filter)])
+    regular_view = CDSView(
+        source=source, filters=[BooleanFilter(regular_filter)]
+    )
+    injection_view = CDSView(
+        source=source, filters=[BooleanFilter(injection_filter)]
+    )
 
     # Add renderers for both groups
     p.circle(

@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 
-from typing import Any, List, Optional
-from fastapi import Depends, APIRouter, Query
-from sqlalchemy.orm import Session
 from datetime import datetime
+from typing import Any, List, Optional
+
+from fastapi import APIRouter, Depends, Query
+from loguru import logger
+from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user, verify_project_access
-from ..models import Prompt
-from ..models import User, UserRole
 from ..kafka_producer import get_kafka_producer
-from loguru import logger
+from ..models import Prompt, User, UserRole
 
 router = APIRouter()
 
+from typing import Any, Dict
+from typing import Optional as PydanticOptional
+
 from pydantic import BaseModel, Field, validator
-from typing import Dict, Any, Optional as PydanticOptional
 
 
 class PromptCheckMessageIn(BaseModel):
@@ -43,7 +45,9 @@ class PromptCheckMessageIn(BaseModel):
         description="Project ID to associate the prompt check with",
     )
     model_supplier: str = Field(
-        "ollama", example="ollama", description="Model supplier (default: ollama)"
+        "ollama",
+        example="ollama",
+        description="Model supplier (default: ollama)",
     )
     probe: str = Field(
         "promptinject.HijackHateHumansMini",
@@ -114,9 +118,13 @@ def prompt_check(
         message = {"id": prompt.id, "prompt_check_data": data}
         import json
 
-        producer.produce("prompt_check", value=json.dumps(message).encode("utf-8"))
+        producer.produce(
+            "prompt_check", value=json.dumps(message).encode("utf-8")
+        )
         producer.poll(0)  # Process delivery reports
-        logger.info(f"Successfully sent prompt {prompt.id} to Kafka for checking")
+        logger.info(
+            f"Successfully sent prompt {prompt.id} to Kafka for checking"
+        )
     except Exception as e:
         logger.exception(f"Failed to send prompt to Kafka: {e}")
         # Continue execution - the API should still work even if Kafka fails
@@ -131,7 +139,9 @@ def list_prompts(
     current_user: User = Depends(get_current_user),
     project_id: int = Query(..., description="Project ID to filter by"),
     skip: int = Query(0, ge=0, description="Skip this many items"),
-    limit: int = Query(100, ge=1, le=1000, description="Return this many items"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Return this many items"
+    ),
     checked_only: bool = Query(False, description="Show only checked prompts"),
 ) -> Any:
 
@@ -142,7 +152,12 @@ def list_prompts(
     if checked_only:
         query = query.filter(Prompt.checked == True)
     total = query.count()
-    prompts = query.order_by(Prompt.created_at.desc()).offset(skip).limit(limit).all()
+    prompts = (
+        query.order_by(Prompt.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return {"prompts": prompts, "total": total}
 
 
@@ -163,6 +178,7 @@ def get_prompt(
 
     if not prompt:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Prompt not found")
 
     # Verify user has access to this prompt's project
@@ -187,6 +203,7 @@ def delete_prompt(
 
     if not prompt:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Prompt not found")
 
     # Verify user has access to this prompt's project

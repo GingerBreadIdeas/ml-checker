@@ -1,6 +1,7 @@
 from sqladmin import Admin, ModelView
+
 from .database import engine
-from .models import User, Project, UserRole, ChatMessage, Prompt, Tag
+from .models import ChatMessage, Project, Prompt, Tag, User, UserRole
 
 
 def setup_admin(app):
@@ -52,7 +53,12 @@ def setup_admin(app):
         column_sortable_list = [ChatMessage.id, ChatMessage.created_at]
 
     class PromptAdmin(ModelView, model=Prompt):
-        column_list = [Prompt.id, Prompt.project_id, Prompt.checked, Prompt.created_at]
+        column_list = [
+            Prompt.id,
+            Prompt.project_id,
+            Prompt.checked,
+            Prompt.created_at,
+        ]
 
     class TagAdmin(ModelView, model=Tag):
         column_list = [

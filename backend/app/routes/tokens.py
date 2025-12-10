@@ -5,9 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..core.security import generate_project_token
-from ..deps import get_db, get_current_user
-from ..models import User, Project, ProjectToken, UserRole
-from ..schemas.tokens import ProjectTokenCreate, ProjectTokenResponse, ProjectTokenList
+from ..deps import get_current_user, get_db
+from ..models import Project, ProjectToken, User, UserRole
+from ..schemas.tokens import (
+    ProjectTokenCreate,
+    ProjectTokenList,
+    ProjectTokenResponse,
+)
 
 router = APIRouter()
 
@@ -23,13 +27,17 @@ def create_project_token(
     Create a new API token for the user's project.
     """
     # Get user's project through UserRole
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    user_role = (
+        db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    )
     if not user_role:
         raise HTTPException(status_code=404, detail="User has no project")
 
     project = user_role.project
     if not project:
-        raise HTTPException(status_code=404, detail="User has no valid project")
+        raise HTTPException(
+            status_code=404, detail="User has no valid project"
+        )
 
     # Generate token
     raw_token, token_hash = generate_project_token()
@@ -72,13 +80,17 @@ def list_project_tokens(
     List all tokens for the user's project (without showing the actual token values).
     """
     # Get user's project
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    user_role = (
+        db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    )
     if not user_role:
         raise HTTPException(status_code=404, detail="User has no project")
 
     project = user_role.project
     if not project:
-        raise HTTPException(status_code=404, detail="User has no valid project")
+        raise HTTPException(
+            status_code=404, detail="User has no valid project"
+        )
 
     # Get all tokens for this project
     tokens = (
@@ -119,18 +131,24 @@ def revoke_project_token(
     Revoke (deactivate) a project token.
     """
     # Get user's project
-    user_role = db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    user_role = (
+        db.query(UserRole).filter(UserRole.user_id == current_user.id).first()
+    )
     if not user_role:
         raise HTTPException(status_code=404, detail="User has no project")
 
     project = user_role.project
     if not project:
-        raise HTTPException(status_code=404, detail="User has no valid project")
+        raise HTTPException(
+            status_code=404, detail="User has no valid project"
+        )
 
     # Find the token
     token = (
         db.query(ProjectToken)
-        .filter(ProjectToken.id == token_id, ProjectToken.project_id == project.id)
+        .filter(
+            ProjectToken.id == token_id, ProjectToken.project_id == project.id
+        )
         .first()
     )
 

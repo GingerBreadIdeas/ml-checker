@@ -1,16 +1,15 @@
 import typing
 
 import pydantic
-
-from langfuse._client.get_client import get_client
 from langfuse._client.attributes import LangfuseOtelSpanAttributes
+from langfuse._client.get_client import get_client
 from langfuse._client.span import (
-    LangfuseGeneration,
-    LangfuseSpan,
     LangfuseAgent,
     LangfuseChain,
-    LangfuseTool,
+    LangfuseGeneration,
     LangfuseRetriever,
+    LangfuseSpan,
+    LangfuseTool,
 )
 from langfuse.logger import langfuse_logger
 
@@ -22,7 +21,18 @@ except ImportError as e:
         f"Could not import langchain. The langchain integration will not work. {e}"
     )
 
-from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
+)
 from uuid import UUID
 
 from langfuse._utils import _get_timestamp
@@ -115,7 +125,10 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             self.updated_completion_start_time_memo.add(run_id)
 
     def _get_observation_type_from_serialized(
-        self, serialized: Optional[Dict[str, Any]], callback_type: str, **kwargs: Any
+        self,
+        serialized: Optional[Dict[str, Any]],
+        callback_type: str,
+        **kwargs: Any,
     ) -> Union[
         Literal["tool"],
         Literal["retriever"],
@@ -238,8 +251,12 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         ):
             attributes["user_id"] = metadata["langfuse_user_id"]
 
-        if "langfuse_tags" in metadata and isinstance(metadata["langfuse_tags"], list):
-            attributes["tags"] = [str(tag) for tag in metadata["langfuse_tags"]]
+        if "langfuse_tags" in metadata and isinstance(
+            metadata["langfuse_tags"], list
+        ):
+            attributes["tags"] = [
+                str(tag) for tag in metadata["langfuse_tags"]
+            ]
 
         return attributes
 
@@ -264,7 +281,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
             span_name = self.get_langchain_run_name(serialized, **kwargs)
             span_metadata = self.__join_tags_and_metadata(tags, metadata)
-            span_level = "DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None
+            span_level = (
+                "DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None
+            )
 
             observation_type = self._get_observation_type_from_serialized(
                 serialized, "chain", **kwargs
@@ -277,7 +296,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=inputs,
                     level=cast(
-                        Optional[Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]],
+                        Optional[
+                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
+                        ],
                         span_level,
                     ),
                 )
@@ -294,7 +315,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                         if self.update_trace
                         else {}
                     ),
-                    **self._parse_langfuse_trace_attributes_from_metadata(metadata),
+                    **self._parse_langfuse_trace_attributes_from_metadata(
+                        metadata
+                    ),
                 )
                 self.runs[run_id] = span
             else:
@@ -307,7 +330,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=inputs,
                     level=cast(
-                        Optional[Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]],
+                        Optional[
+                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
+                        ],
                         span_level,
                     ),
                 )
@@ -451,16 +476,23 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         try:
-            self._log_debug_event("on_chain_error", run_id, parent_run_id, error=error)
+            self._log_debug_event(
+                "on_chain_error", run_id, parent_run_id, error=error
+            )
             if run_id in self.runs:
-                if any(isinstance(error, t) for t in CONTROL_FLOW_EXCEPTION_TYPES):
+                if any(
+                    isinstance(error, t) for t in CONTROL_FLOW_EXCEPTION_TYPES
+                ):
                     level = None
                 else:
                     level = "ERROR"
 
                 self.runs[run_id].update(
                     level=cast(
-                        Optional[Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]], level
+                        Optional[
+                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
+                        ],
+                        level,
                     ),
                     status_message=str(error) if level else None,
                     input=kwargs.get("inputs"),
@@ -556,7 +588,11 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                 meta = {}
 
             meta.update(
-                {key: value for key, value in kwargs.items() if value is not None}
+                {
+                    key: value
+                    for key, value in kwargs.items()
+                    if value is not None
+                }
             )
 
             observation_type = self._get_observation_type_from_serialized(
@@ -570,7 +606,11 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     as_type=observation_type,
                     input=input_str,
                     metadata=meta,
-                    level="DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None,
+                    level=(
+                        "DEBUG"
+                        if tags and LANGSMITH_TAG_HIDDEN in tags
+                        else None
+                    ),
                 )
             else:
                 # Create child observation for tools within chains/agents
@@ -581,7 +621,11 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     as_type=observation_type,
                     input=input_str,
                     metadata=meta,
-                    level="DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None,
+                    level=(
+                        "DEBUG"
+                        if tags and LANGSMITH_TAG_HIDDEN in tags
+                        else None
+                    ),
                 )
 
         except Exception as e:
@@ -604,7 +648,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             )
             span_name = self.get_langchain_run_name(serialized, **kwargs)
             span_metadata = self.__join_tags_and_metadata(tags, metadata)
-            span_level = "DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None
+            span_level = (
+                "DEBUG" if tags and LANGSMITH_TAG_HIDDEN in tags else None
+            )
 
             observation_type = self._get_observation_type_from_serialized(
                 serialized, "retriever", **kwargs
@@ -617,7 +663,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=query,
                     level=cast(
-                        Optional[Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]],
+                        Optional[
+                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
+                        ],
                         span_level,
                     ),
                 )
@@ -630,7 +678,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     input=query,
                     metadata=span_metadata,
                     level=cast(
-                        Optional[Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]],
+                        Optional[
+                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
+                        ],
                         span_level,
                     ),
                 )
@@ -672,7 +722,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         try:
-            self._log_debug_event("on_tool_end", run_id, parent_run_id, output=output)
+            self._log_debug_event(
+                "on_tool_end", run_id, parent_run_id, output=output
+            )
             if run_id is None or run_id not in self.runs:
                 raise Exception("run not found")
 
@@ -695,7 +747,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         try:
-            self._log_debug_event("on_tool_error", run_id, parent_run_id, error=error)
+            self._log_debug_event(
+                "on_tool_error", run_id, parent_run_id, error=error
+            )
             if run_id is None or run_id not in self.runs:
                 raise Exception("run not found")
 
@@ -723,7 +777,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         try:
             tools = kwargs.get("invocation_params", {}).get("tools", None)
             if tools and isinstance(tools, list):
-                prompts.extend([{"role": "tool", "content": tool} for tool in tools])
+                prompts.extend(
+                    [{"role": "tool", "content": tool} for tool in tools]
+                )
 
             model_name = self._parse_model_and_log_errors(
                 serialized=serialized, metadata=metadata, kwargs=kwargs
@@ -744,9 +800,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     tags,
                     metadata,
                     # If llm is run isolated and outside chain, keep trace attributes
-                    keep_langfuse_trace_attributes=True
-                    if parent_run_id is None
-                    else False,
+                    keep_langfuse_trace_attributes=(
+                        True if parent_run_id is None else False
+                    ),
                 ),
                 "model": model_name,
                 "model_parameters": self._parse_model_parameters(kwargs),
@@ -756,7 +812,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             if parent_run_id is not None and parent_run_id in self.runs:
                 self.runs[run_id] = cast(
                     LangfuseGeneration, self.runs[parent_run_id]
-                ).start_observation(as_type="generation", **content)  # type: ignore
+                ).start_observation(
+                    as_type="generation", **content
+                )  # type: ignore
             else:
                 self.runs[run_id] = self.client.start_observation(
                     as_type="generation", **content
@@ -770,9 +828,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
     @staticmethod
     def _parse_model_parameters(kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Parse the model parameters from the kwargs."""
-        if kwargs["invocation_params"].get("_type") == "IBM watsonx.ai" and kwargs[
-            "invocation_params"
-        ].get("params"):
+        if kwargs["invocation_params"].get(
+            "_type"
+        ) == "IBM watsonx.ai" and kwargs["invocation_params"].get("params"):
             kwargs["invocation_params"] = {
                 **kwargs["invocation_params"],
                 **kwargs["invocation_params"]["params"],
@@ -790,12 +848,24 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                 "frequency_penalty": kwargs["invocation_params"].get(
                     "frequency_penalty"
                 ),
-                "presence_penalty": kwargs["invocation_params"].get("presence_penalty"),
-                "request_timeout": kwargs["invocation_params"].get("request_timeout"),
-                "decoding_method": kwargs["invocation_params"].get("decoding_method"),
-                "min_new_tokens": kwargs["invocation_params"].get("min_new_tokens"),
-                "max_new_tokens": kwargs["invocation_params"].get("max_new_tokens"),
-                "stop_sequences": kwargs["invocation_params"].get("stop_sequences"),
+                "presence_penalty": kwargs["invocation_params"].get(
+                    "presence_penalty"
+                ),
+                "request_timeout": kwargs["invocation_params"].get(
+                    "request_timeout"
+                ),
+                "decoding_method": kwargs["invocation_params"].get(
+                    "decoding_method"
+                ),
+                "min_new_tokens": kwargs["invocation_params"].get(
+                    "min_new_tokens"
+                ),
+                "max_new_tokens": kwargs["invocation_params"].get(
+                    "max_new_tokens"
+                ),
+                "stop_sequences": kwargs["invocation_params"].get(
+                    "stop_sequences"
+                ),
             }.items()
             if value is not None
         }
@@ -840,10 +910,16 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
     ) -> Any:
         try:
             self._log_debug_event(
-                "on_llm_end", run_id, parent_run_id, response=response, kwargs=kwargs
+                "on_llm_end",
+                run_id,
+                parent_run_id,
+                response=response,
+                kwargs=kwargs,
             )
             if run_id not in self.runs:
-                raise Exception("Run not found, see docs what to do in this case.")
+                raise Exception(
+                    "Run not found, see docs what to do in this case."
+                )
             else:
                 response_generation = response.generations[-1][-1]
                 extracted_response = (
@@ -856,7 +932,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
                 # e.g. azure returns the model name in the response
                 model = _parse_model(response)
-                langfuse_generation = cast(LangfuseGeneration, self.runs[run_id])
+                langfuse_generation = cast(
+                    LangfuseGeneration, self.runs[run_id]
+                )
                 langfuse_generation.update(
                     output=extracted_response,
                     usage=llm_usage,
@@ -883,7 +961,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         try:
-            self._log_debug_event("on_llm_error", run_id, parent_run_id, error=error)
+            self._log_debug_event(
+                "on_llm_error", run_id, parent_run_id, error=error
+            )
             if run_id in self.runs:
                 generation = self.runs[run_id]
                 generation.update(
@@ -911,7 +991,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             final_dict.update(metadata)
 
         return (
-            _strip_langfuse_keys_from_dict(final_dict, keep_langfuse_trace_attributes)
+            _strip_langfuse_keys_from_dict(
+                final_dict, keep_langfuse_trace_attributes
+            )
             if final_dict != {}
             else None
         )
@@ -1041,7 +1123,9 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
                 else captured_count
             )  # For Bedrock, the token count is a list when streamed
 
-            usage_model[langfuse_key] = final_count  # Translate key and keep the value
+            usage_model[langfuse_key] = (
+                final_count  # Translate key and keep the value
+            )
 
     if isinstance(usage_model, dict):
         if "input_token_details" in usage_model:
@@ -1060,7 +1144,9 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
                 usage_model[f"output_{key}"] = value
 
                 if "output" in usage_model:
-                    usage_model["output"] = max(0, usage_model["output"] - value)
+                    usage_model["output"] = max(
+                        0, usage_model["output"] - value
+                    )
 
         # Vertex AI
         if "prompt_tokens_details" in usage_model and isinstance(
@@ -1078,13 +1164,17 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
                     usage_model[f"input_modality_{item['modality']}"] = value
 
                     if "input" in usage_model:
-                        usage_model["input"] = max(0, usage_model["input"] - value)
+                        usage_model["input"] = max(
+                            0, usage_model["input"] - value
+                        )
 
         # Vertex AI
         if "candidates_tokens_details" in usage_model and isinstance(
             usage_model["candidates_tokens_details"], list
         ):
-            candidates_tokens_details = usage_model.pop("candidates_tokens_details")
+            candidates_tokens_details = usage_model.pop(
+                "candidates_tokens_details"
+            )
 
             for item in candidates_tokens_details:
                 if (
@@ -1096,7 +1186,9 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
                     usage_model[f"output_modality_{item['modality']}"] = value
 
                     if "output" in usage_model:
-                        usage_model["output"] = max(0, usage_model["output"] - value)
+                        usage_model["output"] = max(
+                            0, usage_model["output"] - value
+                        )
 
         # Vertex AI
         if "cache_tokens_details" in usage_model and isinstance(
@@ -1114,7 +1206,9 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
                     usage_model[f"cached_modality_{item['modality']}"] = value
 
                     if "input" in usage_model:
-                        usage_model["input"] = max(0, usage_model["input"] - value)
+                        usage_model["input"] = max(
+                            0, usage_model["input"] - value
+                        )
 
     usage_model = {k: v for k, v in usage_model.items() if isinstance(v, int)}
 
@@ -1143,11 +1237,15 @@ def _parse_usage(response: LLMResult) -> Any:
                     break
 
                 message_chunk = getattr(generation_chunk, "message", {})
-                response_metadata = getattr(message_chunk, "response_metadata", {})
+                response_metadata = getattr(
+                    message_chunk, "response_metadata", {}
+                )
 
                 chunk_usage = (
                     (
-                        response_metadata.get("usage", None)  # for Bedrock-Anthropic
+                        response_metadata.get(
+                            "usage", None
+                        )  # for Bedrock-Anthropic
                         if isinstance(response_metadata, dict)
                         else None
                     )
@@ -1158,7 +1256,9 @@ def _parse_usage(response: LLMResult) -> Any:
                         if isinstance(response_metadata, dict)
                         else None
                     )
-                    or getattr(message_chunk, "usage_metadata", None)  # for Ollama
+                    or getattr(
+                        message_chunk, "usage_metadata", None
+                    )  # for Ollama
                 )
 
                 if chunk_usage:
