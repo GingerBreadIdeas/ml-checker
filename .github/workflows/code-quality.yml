@@ -1,0 +1,49 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**/*.py'
+      - '.github/workflows/code-quality.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort
+
+    - name: Check code formatting with Black
+      run: |
+        cd backend
+        black --check --diff app/
+
+    - name: Check import sorting with isort
+      run: |
+        cd backend
+        isort --check --diff --profile=black app/
+
+    - name: Summary
+      if: failure()
+      run: |
+        echo "❌ Code quality checks failed!"
+        echo ""
+        echo "To fix formatting issues locally, run:"
+        echo "  cd backend"
+        echo "  black app/"
+        echo "  isort app/"
+        echo ""
+        echo "Or install pre-commit hooks to automatically format before each commit:"
+        echo "  pip install pre-commit"
+        echo "  pre-commit install"
