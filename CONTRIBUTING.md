@@ -97,4 +97,4 @@ We follow PEP 8 and use automated tools to enforce consistency:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same license as the project.
+By contributing, you agree that your contributions will be licensed under the same license as the project. You will be asked to accept CLA.
