@@ -3,7 +3,10 @@
 
 services:
   backend:
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=logging_config.yaml
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-config=logging_config.yaml
+      $${UVICORN_PROXY_HEADERS:+--proxy-headers}
+      --forwarded-allow-ips=$${UVICORN_FORWARDED_ALLOW_IPS:-'*'}"
     volumes:
       - ./backend:/app
     environment:

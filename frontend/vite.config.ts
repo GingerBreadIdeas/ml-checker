@@ -17,6 +17,7 @@ export default defineConfig({
     host: true, // Listen on all addresses
     strictPort: true,
     port: parseInt(process.env.FRONTEND_PORT || '5173'),
+    allowedHosts: process.env.FRONTEND_HOST ? [process.env.FRONTEND_HOST] : undefined,
     hmr: {
       clientPort: parseInt(process.env.FRONTEND_PORT || '5173'), // Force the HMR websocket to use this port
       overlay: true,     // Show error overlay

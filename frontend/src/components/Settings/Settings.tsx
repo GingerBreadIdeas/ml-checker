@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { API_URL } from '../../config/api';
 
 interface ProjectToken {
   token_id: number;
@@ -40,7 +41,7 @@ const Settings: React.FC = () => {
     if (!authToken) return;
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/tokens/projects/tokens', {
+      const response = await fetch(`${API_URL}/tokens/projects/tokens`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -81,7 +82,7 @@ const Settings: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/tokens/projects/tokens', {
+      const response = await fetch(`${API_URL}/tokens/projects/tokens`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -118,7 +119,7 @@ const Settings: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/tokens/projects/tokens/${tokenId}`, {
+      const response = await fetch(`${API_URL}/tokens/projects/tokens/${tokenId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`

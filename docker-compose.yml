@@ -19,7 +19,10 @@ services:
 
   backend:
     build: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-config=logging_config.yaml
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-config=logging_config.yaml
+      $${UVICORN_PROXY_HEADERS:+--proxy-headers}
+      --forwarded-allow-ips=$${UVICORN_FORWARDED_ALLOW_IPS:-'*'}"
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     env_file:

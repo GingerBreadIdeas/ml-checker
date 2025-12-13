@@ -4,10 +4,10 @@ import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Checkbox } from "../ui/checkbox"
 import { JsonViewer } from "../ui/json-viewer"
-import { 
-  AlertTriangle, 
-  MessageSquare, 
-  Clock, 
+import {
+  AlertTriangle,
+  MessageSquare,
+  Clock,
   User,
   Bot,
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Message } from "../table/messages-table"
+import { API_URL } from "../../config/api"
 
 export function MessageDetail() {
   const { messageId } = useParams<{ messageId: string }>()
@@ -44,7 +45,7 @@ export function MessageDetail() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${id}?project_name=default`, {
+      const response = await fetch(`${API_URL}/chat/messages/${id}?project_name=default`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -103,7 +104,7 @@ export function MessageDetail() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}?project_name=default`, {
+      const response = await fetch(`${API_URL}/chat/messages/${message.id}?project_name=default`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -128,7 +129,7 @@ export function MessageDetail() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${message.id}?project_name=default`, {
+      const response = await fetch(`${API_URL}/chat/messages/${message.id}?project_name=default`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

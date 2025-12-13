@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessagesTable, Message } from '../table/messages-table';
 import { Card } from '../ui/card';
+import { API_URL } from '../../config/api';
 
 const Tracking: React.FC = () => {
   // Delete message handler
@@ -9,7 +10,7 @@ const Tracking: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${messageId}`, {
+      const response = await fetch(`${API_URL}/chat/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -31,7 +32,7 @@ const Tracking: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chat/messages/${messageId}`, {
+      const response = await fetch(`${API_URL}/chat/messages/${messageId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
