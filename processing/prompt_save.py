@@ -151,8 +151,8 @@ def process_kafka_message(msg):
 
 if __name__ == "__main__":
     # Kafka configuration
-    kafka_host = os.environ.get("KAFKA_HOST", "localhost")
-    kafka_port = os.environ.get("KAFKA_PORT", "9092")
+    kafka_host = os.environ.get("SERVICE_KAFKA_HOST", "localhost")
+    kafka_port = os.environ.get("SERVICE_KAFKA_PORT", "9092")
     bootstrap_servers = f"{kafka_host}:{kafka_port}"
 
     print(f"All environment variables:")

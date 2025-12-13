@@ -98,8 +98,8 @@ def process_compute_message_metrics(msg):
 
 if __name__ == "__main__":
     # Get Kafka connection details from environment or use defaults
-    kafka_host = os.environ.get("KAFKA_HOST", "localhost")
-    kafka_port = os.environ.get("KAFKA_PORT", "9092")
+    kafka_host = os.environ.get("SERVICE_KAFKA_HOST", "localhost")
+    kafka_port = os.environ.get("SERVICE_KAFKA_PORT", "9092")
     bootstrap_servers = f"{kafka_host}:{kafka_port}"
 
     print(f"Connecting to Kafka at {bootstrap_servers}")

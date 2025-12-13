@@ -28,8 +28,8 @@ def init_kafka_producer() -> None:
     try:
         # Check if we're running in Docker
         kafka_connection_last_call = time.time()
-        kafka_host = os.environ.get("KAFKA_HOST", "localhost")
-        kafka_port = os.environ.get("KAFKA_PORT", "9092")
+        kafka_host = os.environ.get("SERVICE_KAFKA_HOST", "localhost")
+        kafka_port = os.environ.get("SERVICE_KAFKA_PORT", "9092")
         bootstrap_servers = f"{kafka_host}:{kafka_port}"
 
         logger.info(f"Attempting to connect to Kafka at {bootstrap_servers}")
