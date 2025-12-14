@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../config/api';
 
 interface PromptCheckForm {
   prompt_text: string;
@@ -44,7 +45,7 @@ const Prompt: React.FC = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check?project_id=1`, {
+      const response = await fetch(`${API_URL}/prompt-check?project_id=1`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -176,7 +177,8 @@ const Prompt: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check`, {
+      console.log(`${API_URL}/prompt-check`);
+      const response = await fetch(`${API_URL}/prompt-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -230,7 +232,7 @@ const Prompt: React.FC = () => {
     setDeletingId(testId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt-check/${testId}`, {
+      const response = await fetch(`${API_URL}/prompt-check/${testId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -375,6 +377,7 @@ const Prompt: React.FC = () => {
                 >
                   <option value="deepseek-r1:1.5b">deepseek-r1:1.5b</option>
                   <option value="llama3.2:3b">llama3.2:3b</option>
+                  <option value="qwen3:0.6b">qwen3:0.6b</option>
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="claude-3-haiku">claude-3-haiku</option>
                 </select>

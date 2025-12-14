@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { API_BASE } from '../../config/api';
 
 // Mock data type definitions
 interface WeeklyData {
@@ -56,7 +57,7 @@ const Dashboard: React.FC = () => {
     // fetchDashboardData();
     
     // Check server status
-    fetch('http://localhost:8000/api/health')
+    fetch(`${API_BASE}/api/health`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

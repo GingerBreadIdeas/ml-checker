@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../App';
+import { API_URL } from '../../config/api';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -19,7 +20,7 @@ const Register: React.FC = () => {
     
     try {
       // Register user
-      const registerResponse = await fetch('http://localhost:8000/api/v1/auth/register', {
+      const registerResponse = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -41,7 +42,7 @@ const Register: React.FC = () => {
       formData.append('username', username);
       formData.append('password', password);
       
-      const loginResponse = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const loginResponse = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         body: formData
       });
@@ -53,7 +54,7 @@ const Register: React.FC = () => {
       const loginData = await loginResponse.json();
       
       // Get user details
-      const userResponse = await fetch('http://localhost:8000/api/v1/users/me', {
+      const userResponse = await fetch(`${API_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${loginData.access_token}`
         }

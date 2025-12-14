@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../App';
+import { API_URL } from '../../config/api';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -20,19 +21,19 @@ const Login: React.FC = () => {
     formData.append('password', password);
     
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         body: formData
       });
-      
+
       if (!response.ok) {
         throw new Error('Login failed');
       }
-      
+
       const data = await response.json();
-      
+
       // Get user details
-      const userResponse = await fetch('http://localhost:8000/api/v1/users/me', {
+      const userResponse = await fetch(`${API_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${data.access_token}`
         }

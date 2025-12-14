@@ -21,11 +21,20 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: Optional[str] = os.getenv(
-        "DATABASE_URL", "postgresql://postgres:postgres@localhost/ml-checker"
+        "DATABASE_URL",
+        "postgresql://postgres:postgres@localhost/ml-checker",
     )
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]  # For development
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        frontend_host = os.getenv("FRONTEND_HOST", "")
+        if frontend_host:
+            protocol = (
+                "http" if frontend_host.startswith("localhost") else "https"
+            )
+            return [f"{protocol}://{frontend_host}"]
+        return ["*"]
 
     class Config:
         case_sensitive = True

@@ -36,4 +36,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HF_HOME=/root/.huggingface \
     TOKENIZERS_PARALLELISM=false
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 ${UVICORN_PROXY_HEADERS:+--proxy-headers} --forwarded-allow-ips=${UVICORN_FORWARDED_ALLOW_IPS:-'*'}"]

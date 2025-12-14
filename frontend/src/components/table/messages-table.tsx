@@ -7,15 +7,16 @@ import { Checkbox } from "../ui/checkbox"
 import { DataTable } from "../ui/data-table"
 import { DataTableToolbar } from "../ui/data-table-toolbar"
 import { DataTablePagination } from "../ui/data-table-pagination"
-import { 
-  AlertTriangle, 
-  MessageSquare, 
-  Trash2, 
+import {
+  AlertTriangle,
+  MessageSquare,
+  Trash2,
   Calendar,
   Clock,
   ExternalLink
 } from "lucide-react"
 import { cn } from "../../lib/utils"
+import { API_URL } from "../../config/api"
 
 export interface Message {
   id: string
@@ -72,7 +73,7 @@ export function MessagesTable({
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/chat/messages?project_name=default&skip=0&limit=50', {
+      const response = await fetch(`${API_URL}/chat/messages?project_name=default&skip=0&limit=50`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

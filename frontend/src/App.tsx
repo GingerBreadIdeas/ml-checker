@@ -9,6 +9,7 @@ import Settings from './components/Settings/Settings';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import { MessageDetail } from './components/messages/MessageDetail';
+import { API_URL } from './config/api';
 
 interface User {
   username: string;
@@ -69,7 +70,7 @@ function App() {
   // Function to validate token with the backend
   const validateToken = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+      const response = await fetch(`${API_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../../config/api';
 
 declare global {
   interface Window {
@@ -48,11 +49,8 @@ const Anomaly: React.FC = () => {
     setEmpty(false);
     setError({ isError: false, message: '' });
     
-    // Hardcoded for Docker environment
-    const apiBaseUrl = 'http://localhost:8000';
-    
     // Fetch embedding data as JSON
-    fetch(`${apiBaseUrl}/api/v1/visualization/message_embeddings_json`, {
+    fetch(`${API_BASE}/api/v1/visualization/message_embeddings_json`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
