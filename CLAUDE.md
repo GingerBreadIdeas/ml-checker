@@ -31,9 +31,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend (Python/FastAPI)
 - **Framework**: FastAPI with SQLAlchemy ORM
-- **Python Version**: >=3.9
+- **Python Version**: >=3.11
 - **Code Formatting**:
-  - Use `black` for code formatting (line length: 70 for backend/ or 79 for root)
+  - Use `black` for code formatting (line length: 79)
   - Use `isort` for import sorting (profile: "black")
   - Run both before committing: `black app && isort app`
 - **Naming Conventions**:
