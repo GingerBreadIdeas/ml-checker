@@ -67,21 +67,6 @@ services:
       - app-network
     restart: "no"
 
-  # processing:
-  #   build:
-  #     context: ./processing
-  #     dockerfile: Dockerfile
-  #   container_name: processing
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     migrate:
-  #       condition: service_completed_successfully
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - app-network
-
 volumes:
   postgres_data:
 

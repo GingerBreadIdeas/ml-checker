@@ -1,52 +1,43 @@
 # ML-Checker
 
-A FastAPI/React application with Kafka-based prompt checking.
+A FastAPI/React application with Taskiq-based prompt checking using PostgreSQL as message broker.
 
 ## Quick Start
 
 ### Setup the env variables:
 
-```
+```bash
 cp .env.example .env
 ```
 
-load the .env for external variables:
+Load the .env for external variables:
 
-``` bash
+```bash
 source .env
 ```
 
-### Option 1: Full Stack with Kafka (for prompt checks)
+### Start the Application
 
 ```bash
-# Then start the main application 
-docker compose up
+# Start the full stack (backend, frontend, postgres)
+docker compose up -d
+```
 
-# Run prompt checking service
+### Run the Runner Worker
+
+The runner worker processes prompt checks and ML metrics. Run it locally with one of these options:
+
+**CPU only:**
+```bash
 cd runner
-python main.py
+uv run taskiq worker runner:broker
 ```
 
-The prompt-save service is now containerized and will start automatically with the Kafka services. The order of startup is important - Kafka services must be started first.
-
-### Option 2: Basic Stack without Kafka
-
-If you don't need heavy duty stuff:
-
+**CUDA support (GPU):**
 ```bash
-# Start just the core application (without Kafka)
-docker compose -f docker-compose-no-kafka.yml up
+cd runner
+uv run --extra cu126 taskiq worker runner:broker
 ```
-
-Dev stack with docker:
-
-### Option 3: Full Stack for developement
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose-dev.yml up
-```
-
-The application will start with Kafka functionality disabled, but all other features will work normally.
 
 ## Filling in with examplary data
 

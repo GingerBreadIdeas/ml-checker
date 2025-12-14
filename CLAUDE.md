@@ -77,7 +77,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Task Queue (Taskiq)
 - Uses PostgreSQL as message broker
 - **Runner worker**: Runs locally, processes prompt checks and ML metrics
-- **Processing worker**: Runs in Docker, saves results to database
+  - CPU: `uv run taskiq worker runner:broker`
+  - CUDA: `uv run --extra cu126 taskiq worker runner:broker`
 - Task timeout: 600 seconds
 - No automatic retries (max_retries=0)
 

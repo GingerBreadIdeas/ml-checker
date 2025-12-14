@@ -66,13 +66,11 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    # ForeignKey omitted because this lightweight model doesn't define users
-    user_id = Column(Integer, index=True)
+    session_id = Column(Text, nullable=True)
+    project_id = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
-    response = Column(Text, nullable=True)  # Optional response from chatbot
-    is_prompt_injection = Column(
-        Boolean, default=False
-    )  # Flag for prompt injection attacks
+    response = Column(Text, nullable=True)
+    is_prompt_injection = Column(Boolean, default=False)
     metrics = Column(JSONB)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
