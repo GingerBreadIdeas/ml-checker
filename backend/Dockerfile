@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -19,16 +19,14 @@ RUN pip install uv
 RUN mkdir -p /root/.cache/huggingface
 RUN mkdir -p /root/.huggingface
 
-# Copy requirements file
-COPY requirements.txt .
-
-
-# Install other dependencies, excluding torch which we've already installed
-RUN uv pip install --system torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu
-RUN uv pip install --system -r requirements.txt
-
-# Copy application code
+# Copy application code first (needed for pyproject.toml install)
 COPY . .
+
+# Install torch first
+RUN uv pip install --system torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+
+# Install dependencies from pyproject.toml
+RUN uv pip install --system .
 
 # Set environment variables for better performance
 ENV PYTHONDONTWRITEBYTECODE=1 \

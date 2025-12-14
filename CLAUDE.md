@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend (Python/FastAPI)
 - **Framework**: FastAPI with SQLAlchemy ORM
-- **Python Version**: >=3.9
+- **Python Version**: >=3.11
 - **Code Formatting**:
   - Use `black` for code formatting (line length: 70 for backend/ or 79 for root)
   - Use `isort` for import sorting (profile: "black")
@@ -68,9 +68,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `SECRET_KEY`: JWT secret key
 
 ### Docker
-- Use `docker-compose.yml` for full stack (with Kafka)
+- Use `docker-compose.yml` for full stack (backend, frontend, postgres, processing worker)
 - Use `docker-compose-no-kafka.yml` for simplified stack
 - All services use `env_file: - .env` for configuration
 - Ports configurable via environment variables
+- Runner service runs locally (not dockerized)
+
+### Task Queue (Taskiq)
+- Uses PostgreSQL as message broker
+- **Runner worker**: Runs locally, processes prompt checks and ML metrics
+- **Processing worker**: Runs in Docker, saves results to database
+- Task timeout: 600 seconds
+- No automatic retries (max_retries=0)
 
 Note: Update this file as project conventions evolve.
