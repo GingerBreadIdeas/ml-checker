@@ -35,6 +35,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    String,
     Text,
     create_engine,
 )
@@ -66,7 +67,7 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Text, nullable=True)
+    session_id = Column(String, nullable=True)
     project_id = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     response = Column(Text, nullable=True)
