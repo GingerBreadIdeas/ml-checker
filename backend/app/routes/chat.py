@@ -86,7 +86,7 @@ async def trigger_metrics_computation(message: ChatMessage, metrics_options):
         )
     except Exception as e:
         logger.exception(
-            f"Failed to queue message for metrics computation: {e}"
+            f"Failed to queue message {message.id} for metrics computation: {e}"
         )
 
 
