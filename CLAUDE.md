@@ -69,7 +69,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Docker
 - Use `docker-compose.yml` for full stack (backend, frontend, postgres, processing worker)
-- Use `docker-compose-no-kafka.yml` for simplified stack
 - All services use `env_file: - .env` for configuration
 - Ports configurable via environment variables
 - Runner service runs locally (not dockerized)
