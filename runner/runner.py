@@ -149,7 +149,7 @@ def save_prompt_results(prompt_id, results_data):
 
 def calculate_metrics(message) -> dict:
     """
-     Respones:
+     Responses:
     {'label': 'INJECTION', 'score': 0.9999992847442627}
     """
 
