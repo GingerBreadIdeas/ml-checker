@@ -33,7 +33,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    ForeignKey,
     Integer,
     Text,
     create_engine,
