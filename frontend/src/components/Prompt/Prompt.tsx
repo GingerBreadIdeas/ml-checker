@@ -95,56 +95,13 @@ const Prompt: React.FC = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  // Analyze test results to determine if tests passed or failed
+  // Analyze test results based on checked status
   const analyzeTestResults = (test: PromptTest) => {
-    if (!test.checked || !test.check_results) {
+    if (!test.checked) {
       return { status: 'pending', color: 'bg-gray-400', passed: 0, total: 0 };
     }
 
-    try {
-      // Parse the results if it's a string
-      let results = test.check_results;
-      if (typeof results === 'string') {
-        results = JSON.parse(results);
-      }
-
-      // Look for evaluation entries in the raw_results
-      let totalPassed = 0;
-      let totalTests = 0;
-      let hasResults = false;
-
-      if (results.raw_results) {
-        const lines = results.raw_results.split('\n');
-        for (const line of lines) {
-          if (line.trim()) {
-            try {
-              const entry = JSON.parse(line);
-              if (entry.entry_type === 'eval') {
-                hasResults = true;
-                totalPassed += entry.passed || 0;
-                totalTests += entry.total || 0;
-              }
-            } catch (e) {
-              // Skip invalid JSON lines
-            }
-          }
-        }
-      }
-
-      if (!hasResults) {
-        return { status: 'unknown', color: 'bg-yellow-500', passed: 0, total: 0 };
-      }
-
-      const allPassed = totalPassed === totalTests;
-      return {
-        status: allPassed ? 'passed' : 'failed',
-        color: allPassed ? 'bg-green-500' : 'bg-red-500',
-        passed: totalPassed,
-        total: totalTests
-      };
-    } catch (e) {
-      return { status: 'error', color: 'bg-yellow-500', passed: 0, total: 0 };
-    }
+    return { status: 'processed', color: 'bg-green-500', passed: 0, total: 0 };
   };
 
   // Download report function
@@ -543,6 +500,7 @@ const Prompt: React.FC = () => {
                                   <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
                                     testResult.status === 'passed' ? 'bg-green-100 text-green-800' :
                                     testResult.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                    testResult.status === 'processed' ? 'bg-green-100 text-green-800' :
                                     'bg-yellow-100 text-yellow-800'
                                   }`}>
                                     {testResult.status.charAt(0).toUpperCase() + testResult.status.slice(1)}

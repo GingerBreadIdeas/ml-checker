@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user, get_project_from_token
-from ..kafka_producer import get_kafka_producer
 from ..models import ChatMessage, Project, User, UserRole
 from ..schemas.message import ChatMessage as ChatMessageSchema
 from ..schemas.message import (
@@ -16,6 +15,7 @@ from ..schemas.message import (
     ChatMessageList,
     ChatMessageUpdate,
 )
+from ..tasks import process_message_metrics
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -74,29 +74,24 @@ def get_project_with_access(
     return user_role.project
 
 
-def trigger_metrics_computation(message: ChatMessage, metrics_options):
-    producer = get_kafka_producer()
-    if producer is None:
-        logger.warning(
-            "Kafka is not available. Prompt check will not be processed."
+async def trigger_metrics_computation(message: ChatMessage, metrics_options):
+    try:
+        await process_message_metrics.kiq(
+            message_id=message.id,
+            content=message.content,
+            options=metrics_options,
         )
-        return
-
-    message_data = {
-        "id": message.id,
-        "content": message.content,
-        "options": metrics_options,
-    }
-    producer.produce(
-        "compute_message_metrics",
-        value=json.dumps(message_data).encode("utf-8"),
-    )
-    producer.poll(0)  # Process delivery reports
-    logger.info(f"Successfully sent prompt {message.id} to Kafka for checking")
+        logger.info(
+            f"Successfully queued message {message.id} for metrics computation"
+        )
+    except Exception as e:
+        logger.exception(
+            f"Failed to queue message {message.id} for metrics computation: {e}"
+        )
 
 
 @router.post("/messages", response_model=ChatMessageSchema)
-def create_message(
+async def create_message(
     *,
     db: Session = Depends(get_db),
     message_in: ChatMessageCreate,
@@ -117,10 +112,10 @@ def create_message(
     db.refresh(message)
 
     try:
-        trigger_metrics_computation(message, default_metrics_options)
+        await trigger_metrics_computation(message, default_metrics_options)
     except Exception as e:
-        logger.exception(f"Failed to send prompt to Kafka: {e}")
-        # Continue execution - the API should still work even if Kafka fails
+        logger.exception(f"Failed to queue message for metrics: {e}")
+        # Continue execution - the API should still work even if task queue fails
 
     finally:
         return message

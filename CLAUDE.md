@@ -68,9 +68,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `SECRET_KEY`: JWT secret key
 
 ### Docker
-- Use `docker-compose.yml` for full stack (with Kafka)
-- Use `docker-compose-no-kafka.yml` for simplified stack
+- Use `docker-compose.yml` for full stack (backend, frontend, postgres, processing worker)
 - All services use `env_file: - .env` for configuration
 - Ports configurable via environment variables
+- Runner service runs locally (not dockerized)
+
+### Task Queue (Taskiq)
+- Uses PostgreSQL as message broker
+- **Runner worker**: Runs locally, processes prompt checks and ML metrics
+  - CPU: `uv run taskiq worker runner:broker`
+  - CUDA: `uv run --extra cu126 taskiq worker runner:broker`
+- Task timeout: 600 seconds
+- No automatic retries (max_retries=0)
 
 Note: Update this file as project conventions evolve.

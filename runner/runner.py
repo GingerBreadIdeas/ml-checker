@@ -1,25 +1,78 @@
 #!/usr/bin/env python
+
+import asyncio
 import importlib
-import logging
+import json
+import os
 from typing import List, Union
 
 import garak.cli
 import llm_caller
 import ollama
+import torch
 from garak import _config
 from garak.generators.base import Generator
-
-runner_logger = logging.getLogger("my.custom.logger")
-runner_logger.setLevel(logging.INFO)
-
-handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+from loguru import logger
+from taskiq_pg.asyncpg import AsyncpgBroker
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    pipeline,
 )
-handler.setFormatter(formatter)
 
-runner_logger.addHandler(handler)
-runner_logger.propagate = False  # Optional: prevents double logging to root
+DB_URL = os.getenv(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ml-checker"
+)
+broker = AsyncpgBroker(
+    dsn=DB_URL,
+)
+
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.sql import func
+
+engine = create_engine(DB_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Use the newer recommended approach to avoid the warning
+Base = declarative_base()
+JSONPortable = JSON().with_variant(JSONB, "postgresql")
+
+
+# Define Prompt model directly in this file
+class Prompt(Base):
+    __tablename__ = "prompt_check"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # ForeignKey omitted because we don't load the projects table metadata here
+    project_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    content = Column(JSONPortable)
+    check_results = Column(JSONPortable, nullable=True)
+    checked = Column(Boolean, default=False)
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=True)
+    project_id = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    response = Column(Text, nullable=True)
+    is_prompt_injection = Column(Boolean, default=False)
+    metrics = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 def prepare_function(data):
@@ -39,8 +92,8 @@ def prepare_function(data):
             ],
         )
         result = [response.message.content]
-        runner_logger.info(f"Input: {x}")
-        runner_logger.info(f"Chat response: {result}")
+        logger.info(f"Input: {x}")
+        logger.info(f"Chat response: {result}")
         print(result)
         return result
 
@@ -62,8 +115,140 @@ def work(data):
     command = f"""--model_type function --model_name llm_caller#speak
     --config garak_config.yaml -P probes.json --generations 1 {probes}
     """
-    runner_logger.debug(f"Running command: {command}")
+    logger.debug(f"Running command: {command}")
     garak.cli.main(command.split())
     return (
         "/home/mwm/repositories/GBI/ml-checker/runner/run_output.report.jsonl"
     )
+
+
+def save_prompt_results(prompt_id, results_data):
+    db = SessionLocal()
+    try:
+        if not prompt_id:
+            print("Error: No prompt ID found in data")
+            return
+
+        # Query by ID explicitly
+        prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
+        if prompt:
+            prompt.check_results = results_data
+            prompt.checked = True
+            db.commit()
+            print(f"Updated prompt with id: {prompt_id}")
+        else:
+            print(f"No prompt found with id: {prompt_id}")
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error saving prompt results: {e}")
+    finally:
+        logger.debug("saved prompt correctly")
+        db.close()
+
+
+def calculate_metrics(message) -> dict:
+    """
+     Responses:
+    {'label': 'INJECTION', 'score': 0.9999992847442627}
+    """
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "ProtectAI/deberta-v3-base-prompt-injection"
+    )
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "ProtectAI/deberta-v3-base-prompt-injection"
+    )
+
+    classifier = pipeline(
+        "text-classification",
+        model=model,
+        tokenizer=tokenizer,
+        truncation=True,
+        max_length=512,
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    )
+    result = classifier(message)
+    return result[0]
+
+
+def save_message_metrics(data):
+    db = SessionLocal()
+    try:
+        message_id = data.get("id")
+        metrics = data.get("metrics")
+        options = data.get("options")
+        if not message_id:
+            print("Error: No message ID found in data")
+            return
+
+        # Query by ID explicitly
+        message = (
+            db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+        )
+        if message:
+            message.metrics = {"metrics": metrics, "options": options}
+            db.commit()
+            print(f"Updated message with id: {message_id}")
+        else:
+            print(f"No message found with id: {message_id}")
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error saving message results: {e}")
+    finally:
+        db.close()
+
+
+@broker.task(task_name="runner:process_prompt_check", max_retries=0)
+async def process_prompt_check(
+    prompt_id: int,
+    model_supplier: str,
+    model_id: str,
+    prompt_text: str,
+    probe: str,
+) -> None:
+    """
+    Replaces Kafka topic: prompt_check
+    Step 1 of 2-step workflow
+    """
+
+    logger.debug("running prompt job")
+    # Run Garak scan (returns JSONL filepath)
+    prompt_check_data = {
+        "model_supplier": model_supplier,
+        "model_id": model_id,
+        "prompt": prompt_text,
+        "probe": probe,
+    }
+    jsonl_filepath = work(prompt_check_data)
+
+    # Read results file and parse JSONL
+    results_list = []
+    with open(jsonl_filepath, "r") as f:
+        for line in f:
+            if line.strip():
+                results_list.append(json.loads(line))
+
+    save_prompt_results(
+        prompt_id=prompt_id, results_data={"results": results_list}
+    )
+
+
+@broker.task(task_name="runner:process_message_metrics", max_retries=0)
+async def process_message_metrics(
+    message_id: int, content: str, options: dict
+) -> None:
+    """
+    Replaces Kafka topic: compute_message_metrics
+    Step 1 of 2-step workflow
+    """
+    # Run ML inference
+    metrics = calculate_metrics(content)
+
+    message = {
+        "id": message_id,
+        "metrics": metrics,
+        "options": options,
+    }
+    save_message_metrics(message)

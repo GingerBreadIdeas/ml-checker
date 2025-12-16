@@ -7,10 +7,11 @@ from fastapi import APIRouter, Depends, Query
 from loguru import logger
 from sqlalchemy.orm import Session
 
+from ..broker import broker
 from ..database import get_db
 from ..deps import get_current_user, verify_project_access
-from ..kafka_producer import get_kafka_producer
 from ..models import Prompt, User, UserRole
+from ..tasks import process_prompt_check
 
 router = APIRouter()
 
@@ -73,7 +74,7 @@ class PromptListResponse(BaseModel):
 
 
 @router.post("/")
-def prompt_check(
+async def prompt_check(
     *,
     db: Session = Depends(get_db),
     message_in: PromptCheckMessageIn,
@@ -82,8 +83,7 @@ def prompt_check(
     """
     Submit a prompt for checking.
 
-    This endpoint sends the prompt to the Kafka topic for processing
-    by the prompt checking service.
+    This endpoint queues the prompt for processing by the runner service.
     """
 
     # Create message using actual input values
@@ -106,28 +106,19 @@ def prompt_check(
     db.commit()
     db.refresh(prompt)
 
-    # Send to Kafka if available
+    # Queue task for processing
     try:
-        producer = get_kafka_producer()
-        if producer is None:
-            logger.warning(
-                "Kafka is not available. Prompt check will not be processed."
-            )
-            return prompt
-
-        message = {"id": prompt.id, "prompt_check_data": data}
-        import json
-
-        producer.produce(
-            "prompt_check", value=json.dumps(message).encode("utf-8")
+        await process_prompt_check.kiq(
+            prompt_id=prompt.id,
+            model_supplier=message_in.model_supplier,
+            model_id=message_in.model_id,
+            prompt_text=message_in.prompt_text,
+            probe=message_in.probe,
         )
-        producer.poll(0)  # Process delivery reports
-        logger.info(
-            f"Successfully sent prompt {prompt.id} to Kafka for checking"
-        )
+        logger.info(f"Successfully queued prompt {prompt.id} for checking")
     except Exception as e:
-        logger.exception(f"Failed to send prompt to Kafka: {e}")
-        # Continue execution - the API should still work even if Kafka fails
+        logger.exception(f"Failed to queue prompt for checking: {e}")
+        # Continue execution - the API should still work even if task queue fails
 
     return prompt
 
