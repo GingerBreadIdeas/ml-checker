@@ -1,0 +1,54 @@
+name: Deploy via Docker Context
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create .env file from secrets
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Create Docker context for remote server
+        run: |
+          docker context create remote \
+            --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SSH_PORT }}"
+
+      - name: Deploy with Docker Compose
+        run: |
+          # Stop existing containers
+          docker --context remote compose down || true
+
+          # Build and start services
+          docker --context remote compose build
+          docker --context remote compose up -d
+
+          # Wait for services to start
+          sleep 10
+
+          # Check status
+          docker --context remote compose ps
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker context rm remote || true
+          rm -f ~/.ssh/deploy_key
+          rm -f .env
