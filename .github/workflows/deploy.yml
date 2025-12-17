@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - master
+      - main
   workflow_dispatch:
 
 jobs:
   deploy:
-    environment: staging
     runs-on: ubuntu-latest
 
     steps:
@@ -22,29 +22,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-          cat >> ~/.ssh/config <<EOF
-          Host remote-docker
-            HostName ${{ secrets.SSH_HOST }}
-            User ${{ secrets.SSH_USER }}
-            Port ${{ secrets.SSH_PORT }}
-            IdentityFile ~/.ssh/deploy_key
-            IdentitiesOnly yes
-            StrictHostKeyChecking yes
-          EOF
-          chmod 600 ~/.ssh/config
-
       - name: Create .env file from repository variable
         run: |
           echo "${{ vars.ENV_FILE }}" > .env
-          
-      - name: Check SSH connection
-        run: |
-          ssh -o BatchMode=yes -v remote-docker "echo SSH_OK"
-          
+
       - name: Create Docker context for remote server
         run: |
           docker context create remote \
-            --docker "host=ssh://remote-docker"
+            --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SSH_PORT }}"
 
       - name: Deploy with Docker Compose
         run: |
