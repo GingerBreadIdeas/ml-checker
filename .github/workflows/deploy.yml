@@ -22,9 +22,9 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Create .env file from secrets
+      - name: Create .env file from repository variable
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
+          echo "${{ vars.ENV_FILE }}" > .env
 
       - name: Create Docker context for remote server
         run: |
