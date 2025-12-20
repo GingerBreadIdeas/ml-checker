@@ -43,4 +43,6 @@ uv run --extra cu126 taskiq worker runner:broker
 
 Use `uv run scripts/upload_sample_messages.py --token {insert token here}` to fill in the examplary data
 
+## Using th service
 
+The default username and password are: `testusername` and `testpassword`. 
