@@ -30,7 +30,7 @@ The runner worker processes prompt checks and ML metrics. Run it locally with on
 **CPU only:**
 ```bash
 cd runner
-uv run taskiq worker runner:broker
+uv run --extra cpu taskiq worker runner:broker
 ```
 
 **CUDA support (GPU):**

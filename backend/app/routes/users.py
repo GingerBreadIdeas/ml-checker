@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..deps import get_current_active_superuser, get_current_user, get_db
-from ..models import User
+from ..models import Project, User, UserRole
 from ..schemas.user import User as UserSchema
 
 router = APIRouter()
@@ -12,12 +12,28 @@ router = APIRouter()
 
 @router.get("/me", response_model=UserSchema)
 def read_user_me(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Get current user
+    Get current user with default project
     """
-    return current_user
+    # Find the user's default project
+    default_project = (
+        db.query(Project)
+        .join(UserRole)
+        .filter(UserRole.user_id == current_user.id)
+        .filter(Project.is_default == True)
+        .first()
+    )
+
+    # Create response with default_project_id
+    user_data = UserSchema.from_orm(current_user)
+    user_data.default_project_id = (
+        default_project.id if default_project else None
+    )
+
+    return user_data
 
 
 @router.get("/", response_model=List[UserSchema])
