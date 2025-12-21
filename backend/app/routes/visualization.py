@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..deps import get_current_user
 from ..models import ChatMessage, User
-from ..services.embeddings import create_embeddings, reduce_to_2d
+from ..tasks import create_embeddings, reduce_to_2d
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -34,7 +34,7 @@ class MessageEmbeddingData(BaseModel):
 
 
 @router.get("/message_embeddings_data")
-def get_message_embeddings_data(
+async def get_message_embeddings_data(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> MessageEmbeddingData:
@@ -69,13 +69,13 @@ def get_message_embeddings_data(
             )
             texts = texts[:50]
 
-        embeddings = create_embeddings(texts)
+        embeddings = await create_embeddings.kiq(texts)
         logger.info(
             f"Successfully created embeddings with shape {embeddings.shape}"
         )
 
         logger.info("Reducing embeddings to 2D with t-SNE")
-        points_2d = reduce_to_2d(embeddings)
+        points_2d = reduce_to_2d.kiq(embeddings)
         logger.info(
             f"Successfully reduced embeddings to 2D with shape {points_2d.shape}"
         )

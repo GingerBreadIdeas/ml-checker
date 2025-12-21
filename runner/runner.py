@@ -4,7 +4,7 @@ import asyncio
 import importlib
 import json
 import os
-from typing import List, Union
+from typing import List, Union, tuple
 
 import garak.cli
 import llm_caller
@@ -19,6 +19,8 @@ from transformers import (
     AutoTokenizer,
     pipeline,
 )
+from sklearn.manifold import TSNE
+import numpy as np
 
 DB_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ml-checker"
@@ -252,3 +254,64 @@ async def process_message_metrics(
         "options": options,
     }
     save_message_metrics(message)
+
+
+
+@async_shared_broker.task(task_name="runner:create_embeddings")
+def create_embeddings(
+    texts: List[str],
+    model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+) -> np.ndarray:
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+
+    embeddings = []
+    batch_size = 32
+
+    for i in range(0, len(texts), batch_size):
+        batch_texts = texts[i : i + batch_size]
+
+        # Tokenize batch
+        encoded_inputs = tokenizer(
+            batch_texts,
+            padding=True,
+            truncation=True,
+            max_length=512,
+            return_tensors="pt",
+        ).to(device)
+
+        # Compute token embeddings
+        with torch.no_grad():
+            model_output = model(**encoded_inputs)
+
+        # Use mean pooling to get sentence embeddings
+        attention_mask = encoded_inputs["attention_mask"]
+        token_embeddings = model_output.last_hidden_state
+
+        # Mask the padding tokens and compute mean of token embeddings
+        input_mask_expanded = (
+            attention_mask.unsqueeze(-1)
+            .expand(token_embeddings.size())
+            .float()
+        )
+        sentence_embeddings = torch.sum(
+            token_embeddings * input_mask_expanded, 1
+        ) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+        # Add batch embeddings to results
+        embeddings.append(sentence_embeddings.cpu().numpy())
+
+    # Concatenate all batch embeddings
+    embeddings = np.vstack(embeddings)
+    return embeddings
+
+
+def reduce_to_2d(embeddings: np.ndarray, random_state: int = 42) -> np.ndarray:
+    tsne = TSNE(
+        n_components=2,
+        random_state=random_state,
+        perplexity=min(30, max(5, len(embeddings) // 10)),
+    )
+    return tsne.fit_transform(embeddings)
