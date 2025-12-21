@@ -14,6 +14,7 @@ import { API_URL } from './config/api';
 interface User {
   username: string;
   email: string;
+  default_project_id: number | null;
 }
 
 interface AuthContextType {

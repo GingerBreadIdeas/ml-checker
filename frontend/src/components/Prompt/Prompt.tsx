@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { API_URL } from '../../config/api';
+import { AuthContext } from '../../App';
 
 interface PromptCheckForm {
   prompt_text: string;
   model_id: string;
   model_supplier: string;
   probe: string;
-  project_id: number;
+  project_id: number | null;
 }
 
 interface PromptTest {
@@ -23,6 +24,7 @@ interface PromptTest {
 }
 
 const Prompt: React.FC = () => {
+  const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('tests');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<PromptCheckForm>({
@@ -30,7 +32,7 @@ const Prompt: React.FC = () => {
     model_id: 'deepseek-r1:1.5b',
     model_supplier: 'ollama',
     probe: 'promptinject.HijackHateHumansMini',
-    project_id: 1
+    project_id: user?.default_project_id || null
   });
   const [promptTests, setPromptTests] = useState<PromptTest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,8 @@ const Prompt: React.FC = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/prompt-check?project_id=1`, {
+      const projectId = user?.default_project_id || null;
+      const response = await fetch(`${API_URL}/prompt-check?project_id=${projectId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -176,7 +179,7 @@ const Prompt: React.FC = () => {
       model_id: 'deepseek-r1:1.5b',
       model_supplier: 'ollama',
       probe: 'promptinject.HijackHateHumansMini',
-      project_id: 1
+      project_id: user?.default_project_id || null
     });
   };
 
@@ -471,7 +474,7 @@ const Prompt: React.FC = () => {
                                         model_id: test.content.model_id || 'deepseek-r1:1.5b',
                                         model_supplier: test.content.model_supplier || 'ollama',
                                         probe: test.content.probe || 'promptinject.HijackHateHumansMini',
-                                        project_id: 1
+                                        project_id: user?.default_project_id || null
                                       });
                                       setActiveTab('prepare');
                                     }}

@@ -19,14 +19,15 @@ RUN pip install uv
 RUN mkdir -p /root/.cache/huggingface
 RUN mkdir -p /root/.huggingface
 
-# Copy application code first (needed for pyproject.toml install)
-COPY . .
-
-# Install torch first
-RUN uv pip install --system torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+# Copy only pyproject.toml first for better layer caching
+COPY pyproject.toml .
 
 # Install dependencies from pyproject.toml
+# This layer will be cached unless pyproject.toml changes
 RUN uv pip install --system .
+
+# Now copy the rest of the application code
+COPY . .
 
 # Set environment variables for better performance
 ENV PYTHONDONTWRITEBYTECODE=1 \

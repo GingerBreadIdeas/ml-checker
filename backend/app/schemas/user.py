@@ -28,7 +28,7 @@ class UserInDBBase(UserBase):
 
 
 class User(UserInDBBase):
-    pass
+    default_project_id: Optional[int] = None
 
 
 class UserInDB(UserInDBBase):
