@@ -2,24 +2,14 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 from taskiq.brokers.shared_broker import async_shared_broker
 
 from .broker import broker
 from .core.config import settings
-from .database import Base, get_db
+from .database import get_db
 from .init_db import init_db
-from .models import (
-    ChatMessage,
-    Project,
-    ProjectToken,
-    Prompt,
-    Tag,
-    User,
-    UserRole,
-)
 from .routes import api_router
 
 logger = logging.getLogger(__name__)
@@ -58,7 +48,6 @@ app.add_middleware(
 )
 
 # Setup SQLAdmin (only in non-test environments)
-import os
 
 if os.getenv("TEST_ENV", "false").lower() != "true":
     from .admin import setup_admin

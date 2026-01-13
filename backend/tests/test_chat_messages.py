@@ -1,4 +1,3 @@
-import pytest
 from app.models import ChatMessage
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -29,7 +28,8 @@ class TestChatMessages:
         )
 
         # The message should be in the project that the token belongs to
-        # The project_token_headers uses test_project, not the auto-created default project
+        # The project_token_headers uses test_project,
+        # not the auto-created default project
         assert response.status_code == 200
         data = response.json()
         assert data["content"] == message_data["content"]
@@ -108,7 +108,7 @@ class TestChatMessages:
     ):
         """Test successful retrieval of messages."""
         # Get the user's default project (auto-created when user was created)
-        from app.models import Project, UserRole
+        from app.models import UserRole
 
         user_role = (
             db.query(UserRole).filter(UserRole.user_id == test_user.id).first()

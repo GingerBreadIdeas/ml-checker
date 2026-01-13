@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Script to upload sample messages to the ML-Checker API using the deepset/prompt-injections dataset.
+Script to upload sample messages to the ML-Checker API
+using the deepset/prompt-injections dataset.
 
 Usage:
     python upload_sample_messages.py --token YOUR_PROJECT_TOKEN [--url API_URL]
@@ -8,7 +9,8 @@ Usage:
 Example:
     python upload_sample_messages.py --token proj_1234567890abcdef...
 
-Note: Use a project API token (not a user JWT token). Generate one from the Settings page.
+Note: Use a project API token (not a user JWT token).
+Generate one from the Settings page.
 """
 
 import argparse
@@ -70,7 +72,7 @@ def upload_message(
 def main():
     args = parse_args()
 
-    print(f"Loading prompt-injections dataset from Hugging Face...")
+    print("Loading prompt-injections dataset from Hugging Face...")
 
     # Load the dataset
     try:
@@ -81,7 +83,7 @@ def main():
         print("Falling back to pandas read_csv from parquet URL...")
         try:
             # Alternative: directly download the parquet file
-            url = "https://huggingface.co/datasets/deepset/prompt-injections/resolve/main/data/train-00000-of-00001.parquet"
+            url = "https://huggingface.co/datasets/deepset/prompt-injections/resolve/main/data/train-00000-of-00001.parquet"  # noqa: E501
             train_data = pd.read_parquet(url)
         except Exception as e2:
             print(f"Failed to load dataset: {e2}")
@@ -97,9 +99,10 @@ def main():
     injection_messages = train_data[train_data["label"] == 1]["text"].tolist()
 
     print(
-        f"Found {len(normal_messages)} normal messages and {len(injection_messages)} injection messages"
+        f"Found {len(normal_messages)} normal messages "
+        f"and {len(injection_messages)} injection messages"
     )
-    print(f"Using project API token for authentication")
+    print("Using project API token for authentication")
 
     # Sample the required number of messages
     normal_sample = random.sample(
@@ -110,13 +113,14 @@ def main():
     )
 
     print(
-        f"Will upload {len(normal_sample)} normal messages and {len(injection_sample)} prompt injection messages"
+        f"Will upload {len(normal_sample)} normal messages "
+        f"and {len(injection_sample)} prompt injection messages"
     )
 
     # Upload normal messages
     success_count = 0
     for i, msg in enumerate(normal_sample):
-        print(f"Uploading normal message {i+1}/{len(normal_sample)}...")
+        print(f"Uploading normal message {i + 1}/{len(normal_sample)}...")
 
         # Truncate long messages
         if len(msg) > 1000:
@@ -129,13 +133,16 @@ def main():
         time.sleep(0.2)
 
     print(
-        f"Successfully uploaded {success_count}/{len(normal_sample)} normal messages"
+        f"Successfully uploaded {success_count}/"
+        f"{len(normal_sample)} normal messages"
     )
 
     # Upload injection messages
     injection_success = 0
     for i, msg in enumerate(injection_sample):
-        print(f"Uploading injection message {i+1}/{len(injection_sample)}...")
+        print(
+            f"Uploading injection message {i + 1}/{len(injection_sample)}..."
+        )
 
         # Truncate long messages
         if len(msg) > 1000:
@@ -148,10 +155,12 @@ def main():
         time.sleep(0.2)
 
     print(
-        f"Successfully uploaded {injection_success}/{len(injection_sample)} injection messages"
+        f"Successfully uploaded {injection_success}/"
+        f"{len(injection_sample)} injection messages"
     )
     print(
-        f"Total: {success_count + injection_success}/{len(normal_sample) + len(injection_sample)} messages uploaded"
+        f"Total: {success_count + injection_success}/"
+        f"{len(normal_sample) + len(injection_sample)} messages uploaded"
     )
 
 

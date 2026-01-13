@@ -14,7 +14,7 @@ from app.database import Base, get_db
 from app.main import app as fastapi_app
 from app.models import Project, ProjectToken, RoleType, User, UserRole
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -26,13 +26,13 @@ engine = create_engine(
     poolclass=StaticPool,
     future=True,  #!
 )
-TestingSessionLocal = sessionmaker(
+testing_session_local = sessionmaker(
     autocommit=False, autoflush=False, bind=engine
 )
 
 # Patch the app's database module to use our test engine
 app.database.engine = engine
-app.database.SessionLocal = TestingSessionLocal
+app.database.SessionLocal = testing_session_local
 
 
 @pytest.fixture(scope="function")
@@ -50,7 +50,7 @@ def db(tmp_path):
     # Build schema from models
     Base.metadata.create_all(engine)
 
-    TestingSessionLocal = sessionmaker(
+    testing_session_local = sessionmaker(
         bind=engine,
         autoflush=False,
         autocommit=False,
@@ -64,11 +64,11 @@ def db(tmp_path):
         import app.database as dbmod
 
         dbmod.engine = engine
-        dbmod.SessionLocal = TestingSessionLocal
+        dbmod.SessionLocal = testing_session_local
     except Exception:
         pass  # if you don't expose these, it's fine
 
-    session = TestingSessionLocal()
+    session = testing_session_local()
     try:
         yield session
     finally:

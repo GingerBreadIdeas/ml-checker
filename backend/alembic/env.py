@@ -12,11 +12,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app import models  # Import models so they're registered with Base
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.database import Base
+from app.database import Base  # noqa: E402
 
 target_metadata = Base.metadata
 

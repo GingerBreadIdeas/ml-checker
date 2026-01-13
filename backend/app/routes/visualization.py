@@ -1,16 +1,14 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from bokeh.embed import file_html
-from bokeh.layouts import column, row
+from bokeh.layouts import column
 from bokeh.models import (
     BooleanFilter,
     CDSView,
-    Circle,
     ColumnDataSource,
     DataTable,
     HoverTool,
-    MultiLine,
     TableColumn,
 )
 from bokeh.plotting import figure
@@ -29,8 +27,8 @@ router = APIRouter()
 
 
 class MessageEmbeddingData(BaseModel):
-    points: List[List[float]]
-    messages: List[Dict[str, Any]]
+    points: list[list[float]]
+    messages: list[dict[str, Any]]
 
 
 @router.get("/message_embeddings_data")
@@ -77,7 +75,8 @@ def get_message_embeddings_data(
         logger.info("Reducing embeddings to 2D with t-SNE")
         points_2d = reduce_to_2d(embeddings)
         logger.info(
-            f"Successfully reduced embeddings to 2D with shape {points_2d.shape}"
+            f"Successfully reduced embeddings "
+            f"to 2D with shape {points_2d.shape}"
         )
     except Exception as e:
         import traceback
@@ -113,14 +112,14 @@ def get_message_embeddings_json(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    Generate a visualization of message embeddings in 2D as JSON for browser embedding.
+    Generate a visualization of message embeddings in 2D
+    as JSON for browser embedding.
 
     Returns JSON that can be embedded with Bokeh.embed.embed_item:
     - Regular messages displayed as blue dots
     - Prompt injection messages displayed as red dots
     - Interactive tooltips showing message details
     """
-    import json
 
     from bokeh.embed import json_item
 
@@ -240,7 +239,7 @@ def get_message_embeddings_json(
     p.add_layout(legend, "right")
 
     # Create data table
-    from bokeh.models import DataTable, StringFormatter, TableColumn
+    from bokeh.models import DataTable, TableColumn
 
     columns = [
         TableColumn(field="message_id", title="ID", width=60),
@@ -295,7 +294,8 @@ def get_message_embeddings_html(
 
     if not messages:
         return Response(
-            content="<html><body><h1>No messages found</h1><p>Send some messages first to see visualizations.</p></body></html>",
+            content="<html><body><h1>No messages found</h1><p>Send some "
+            "messages first to see visualizations.</p></body></html>",
             media_type="text/html",
         )
 
@@ -313,7 +313,8 @@ def get_message_embeddings_html(
         points_2d = reduce_to_2d(embeddings)
     except Exception as e:
         return Response(
-            content=f"<html><body><h1>Error generating embeddings</h1><p>{str(e)}</p></body></html>",
+            content="<html><body><h1>Error generating embeddings</h1>"
+            f"<p>{str(e)}</p></body></html>",
             media_type="text/html",
         )
 
@@ -355,7 +356,7 @@ def get_message_embeddings_html(
     p.add_tools(hover)
 
     # Create scatter plot for all points
-    scatter = p.scatter(
+    p.scatter(
         "x",
         "y",
         source=source,

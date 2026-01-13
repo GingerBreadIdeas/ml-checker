@@ -1,4 +1,4 @@
-import typing
+# ruff: noqa: E501
 
 import pydantic
 from langfuse._client.attributes import LangfuseOtelSpanAttributes
@@ -21,16 +21,10 @@ except ImportError as e:
         f"Could not import langchain. The langchain integration will not work. {e}"
     )
 
+from collections.abc import Sequence
 from typing import (
     Any,
-    Dict,
-    List,
     Literal,
-    Optional,
-    Sequence,
-    Set,
-    Type,
-    Union,
     cast,
 )
 from uuid import UUID
@@ -63,7 +57,7 @@ except ImportError:
     )
 
 LANGSMITH_TAG_HIDDEN: str = "langsmith:hidden"
-CONTROL_FLOW_EXCEPTION_TYPES: Set[Type[BaseException]] = set()
+CONTROL_FLOW_EXCEPTION_TYPES: set[type[BaseException]] = set()
 
 try:
     from langgraph.errors import GraphBubbleUp
@@ -75,7 +69,7 @@ except ImportError:
 
 class LangchainCallbackHandler(LangchainBaseCallbackHandler):
     def __init__(
-        self, *, public_key: Optional[str] = None, update_trace: bool = False
+        self, *, public_key: str | None = None, update_trace: bool = False
     ) -> None:
         """Initialize the LangchainCallbackHandler.
 
@@ -85,21 +79,19 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         """
         self.client = get_client(public_key=public_key)
 
-        self.runs: Dict[
+        self.runs: dict[
             UUID,
-            Union[
-                LangfuseSpan,
-                LangfuseGeneration,
-                LangfuseAgent,
-                LangfuseChain,
-                LangfuseTool,
-                LangfuseRetriever,
-            ],
+            LangfuseSpan
+            | LangfuseGeneration
+            | LangfuseAgent
+            | LangfuseChain
+            | LangfuseTool
+            | LangfuseRetriever,
         ] = {}
-        self.prompt_to_parent_run_map: Dict[UUID, Any] = {}
-        self.updated_completion_start_time_memo: Set[UUID] = set()
+        self.prompt_to_parent_run_map: dict[UUID, Any] = {}
+        self.updated_completion_start_time_memo: set[UUID] = set()
 
-        self.last_trace_id: Optional[str] = None
+        self.last_trace_id: str | None = None
         self.update_trace = update_trace
 
     def on_llm_new_token(
@@ -107,7 +99,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         token: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run on new LLM token. Only available when streaming is enabled."""
@@ -126,17 +118,17 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def _get_observation_type_from_serialized(
         self,
-        serialized: Optional[Dict[str, Any]],
+        serialized: dict[str, Any] | None,
         callback_type: str,
         **kwargs: Any,
-    ) -> Union[
-        Literal["tool"],
-        Literal["retriever"],
-        Literal["generation"],
-        Literal["agent"],
-        Literal["chain"],
-        Literal["span"],
-    ]:
+    ) -> (
+        Literal["tool"]
+        | Literal["retriever"]
+        | Literal["generation"]
+        | Literal["agent"]
+        | Literal["chain"]
+        | Literal["span"]
+    ):
         """Determine Langfuse observation type from LangChain component.
 
         Args:
@@ -171,7 +163,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         return "span"
 
     def get_langchain_run_name(
-        self, serialized: Optional[Dict[str, Any]], **kwargs: Any
+        self, serialized: dict[str, Any] | None, **kwargs: Any
     ) -> str:
         """Retrieve the name of a serialized LangChain runnable.
 
@@ -211,7 +203,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         error: BaseException,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when Retriever errors."""
@@ -234,9 +226,9 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def _parse_langfuse_trace_attributes_from_metadata(
         self,
-        metadata: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
-        attributes: Dict[str, Any] = {}
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        attributes: dict[str, Any] = {}
 
         if metadata is None:
             return attributes
@@ -262,13 +254,13 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_chain_start(
         self,
-        serialized: Optional[Dict[str, Any]],
-        inputs: Dict[str, Any],
+        serialized: dict[str, Any] | None,
+        inputs: dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -296,9 +288,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=inputs,
                     level=cast(
-                        Optional[
-                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
-                        ],
+                        Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"] | None,
                         span_level,
                     ),
                 )
@@ -330,9 +320,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=inputs,
                     level=cast(
-                        Optional[
-                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
-                        ],
+                        Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"] | None,
                         span_level,
                     ),
                 )
@@ -346,8 +334,8 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         self,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID],
-        metadata: Optional[Dict[str, Any]],
+        parent_run_id: UUID | None,
+        metadata: dict[str, Any] | None,
     ) -> None:
         """We need to register any passed Langfuse prompt to the parent_run_id so that we can link following generations with that prompt.
 
@@ -368,7 +356,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             registered_prompt = self.prompt_to_parent_run_map[parent_run_id]
             self.prompt_to_parent_run_map[run_id] = registered_prompt
 
-    def _deregister_langfuse_prompt(self, run_id: Optional[UUID]) -> None:
+    def _deregister_langfuse_prompt(self, run_id: UUID | None) -> None:
         if run_id is not None and run_id in self.prompt_to_parent_run_map:
             del self.prompt_to_parent_run_map[run_id]
 
@@ -377,7 +365,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         action: AgentAction,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run on agent action."""
@@ -408,7 +396,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         finish: AgentFinish,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -434,10 +422,10 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_chain_end(
         self,
-        outputs: Dict[str, Any],
+        outputs: dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -471,8 +459,8 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         error: BaseException,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
         **kwargs: Any,
     ) -> None:
         try:
@@ -489,9 +477,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
                 self.runs[run_id].update(
                     level=cast(
-                        Optional[
-                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
-                        ],
+                        Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"] | None,
                         level,
                     ),
                     status_message=str(error) if level else None,
@@ -509,13 +495,13 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_chat_model_start(
         self,
-        serialized: Optional[Dict[str, Any]],
-        messages: List[List[BaseMessage]],
+        serialized: dict[str, Any] | None,
+        messages: list[list[BaseMessage]],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -526,7 +512,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                 serialized,
                 run_id,
                 cast(
-                    List,
+                    list,
                     _flatten_comprehension(
                         [self._create_message_dicts(m) for m in messages]
                     ),
@@ -541,13 +527,13 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_llm_start(
         self,
-        serialized: Optional[Dict[str, Any]],
-        prompts: List[str],
+        serialized: dict[str, Any] | None,
+        prompts: list[str],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -557,7 +543,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             self.__on_llm_action(
                 serialized,
                 run_id,
-                cast(List, prompts[0] if len(prompts) == 1 else prompts),
+                cast(list, prompts[0] if len(prompts) == 1 else prompts),
                 parent_run_id,
                 tags=tags,
                 metadata=metadata,
@@ -568,13 +554,13 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_tool_start(
         self,
-        serialized: Optional[Dict[str, Any]],
+        serialized: dict[str, Any] | None,
         input_str: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -633,13 +619,13 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def on_retriever_start(
         self,
-        serialized: Optional[Dict[str, Any]],
+        serialized: dict[str, Any] | None,
         query: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -663,9 +649,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     metadata=span_metadata,
                     input=query,
                     level=cast(
-                        Optional[
-                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
-                        ],
+                        Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"] | None,
                         span_level,
                     ),
                 )
@@ -678,9 +662,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
                     input=query,
                     metadata=span_metadata,
                     level=cast(
-                        Optional[
-                            Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"]
-                        ],
+                        Literal["DEBUG", "DEFAULT", "WARNING", "ERROR"] | None,
                         span_level,
                     ),
                 )
@@ -693,7 +675,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         documents: Sequence[Document],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -718,7 +700,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         output: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -743,7 +725,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         error: BaseException,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -766,12 +748,12 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def __on_llm_action(
         self,
-        serialized: Optional[Dict[str, Any]],
+        serialized: dict[str, Any] | None,
         run_id: UUID,
-        prompts: List[Any],
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        prompts: list[Any],
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
         try:
@@ -812,9 +794,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             if parent_run_id is not None and parent_run_id in self.runs:
                 self.runs[run_id] = cast(
                     LangfuseGeneration, self.runs[parent_run_id]
-                ).start_observation(
-                    as_type="generation", **content
-                )  # type: ignore
+                ).start_observation(as_type="generation", **content)  # type: ignore
             else:
                 self.runs[run_id] = self.client.start_observation(
                     as_type="generation", **content
@@ -826,7 +806,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             langfuse_logger.exception(e)
 
     @staticmethod
-    def _parse_model_parameters(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_model_parameters(kwargs: dict[str, Any]) -> dict[str, Any]:
         """Parse the model parameters from the kwargs."""
         if kwargs["invocation_params"].get(
             "_type"
@@ -873,10 +853,10 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
     def _parse_model_and_log_errors(
         self,
         *,
-        serialized: Optional[Dict[str, Any]],
-        metadata: Optional[Dict[str, Any]],
-        kwargs: Dict[str, Any],
-    ) -> Optional[str]:
+        serialized: dict[str, Any] | None,
+        metadata: dict[str, Any] | None,
+        kwargs: dict[str, Any],
+    ) -> str | None:
         """Parse the model name and log errors if parsing fails."""
         try:
             model_name = _parse_model_name_from_metadata(
@@ -905,7 +885,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         response: LLMResult,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -957,7 +937,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         error: BaseException,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -980,10 +960,10 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
 
     def __join_tags_and_metadata(
         self,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         keep_langfuse_trace_attributes: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         final_dict = {}
         if tags is not None and len(tags) > 0:
             final_dict["tags"] = tags
@@ -998,7 +978,7 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
             else None
         )
 
-    def _convert_message_to_dict(self, message: BaseMessage) -> Dict[str, Any]:
+    def _convert_message_to_dict(self, message: BaseMessage) -> dict[str, Any]:
         # assistant message
         if isinstance(message, HumanMessage):
             message_dict = {"role": "user", "content": message.content}
@@ -1027,19 +1007,20 @@ class LangchainCallbackHandler(LangchainBaseCallbackHandler):
         return message_dict
 
     def _create_message_dicts(
-        self, messages: List[BaseMessage]
-    ) -> List[Dict[str, Any]]:
+        self, messages: list[BaseMessage]
+    ) -> list[dict[str, Any]]:
         return [self._convert_message_to_dict(m) for m in messages]
 
     def _log_debug_event(
         self,
         event_name: str,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> None:
         langfuse_logger.debug(
-            f"Event: {event_name}, run_id: {str(run_id)[:5]}, parent_run_id: {str(parent_run_id)[:5]}"
+            f"Event: {event_name}, run_id: {str(run_id)[:5]}, "
+            f"parent_run_id: {str(parent_run_id)[:5]}"
         )
 
 
@@ -1060,24 +1041,27 @@ def _flatten_comprehension(matrix: Any) -> Any:
     return [item for row in matrix for item in row]
 
 
-def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
-    # maintains a list of key translations. For each key, the usage model is checked
-    # and a new object will be created with the new key if the key exists in the usage model
+def _parse_usage_model(usage: pydantic.BaseModel | dict) -> Any:
+    # maintains a list of key translations.
+    # For each key, the usage model is checked
+    # and a new object will be created with the new key
+    # if the key exists in the usage model.
     # All non matched keys will remain on the object.
 
     if hasattr(usage, "__dict__"):
         usage = usage.__dict__
 
     conversion_list = [
-        # https://pypi.org/project/langchain-anthropic/ (works also for Bedrock-Anthropic)
+        # https://pypi.org/project/langchain-anthropic/
+        # (works also for Bedrock-Anthropic)
         ("input_tokens", "input"),
         ("output_tokens", "output"),
         ("total_tokens", "total"),
-        # https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/get-token-count
+        # https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/get-token-count # noqa: E501
         ("prompt_token_count", "input"),
         ("candidates_token_count", "output"),
         ("total_token_count", "total"),
-        # Bedrock: https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-cw.html#runtime-cloudwatch-metrics
+        # Bedrock: https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-cw.html#runtime-cloudwatch-metrics # noqa: E501
         ("inputTokenCount", "input"),
         ("outputTokenCount", "output"),
         ("totalTokenCount", "total"),
@@ -1086,7 +1070,7 @@ def _parse_usage_model(usage: typing.Union[pydantic.BaseModel, dict]) -> Any:
         ("generated_token_count", "output"),
     ]
 
-    usage_model = cast(Dict, usage.copy())  # Copy all existing key-value pairs
+    usage_model = cast(dict, usage.copy())  # Copy all existing key-value pairs
 
     # Skip OpenAI usage types as they are handled server side
     if (
@@ -1281,7 +1265,7 @@ def _parse_model(response: LLMResult) -> Any:
     return llm_model
 
 
-def _parse_model_name_from_metadata(metadata: Optional[Dict[str, Any]]) -> Any:
+def _parse_model_name_from_metadata(metadata: dict[str, Any] | None) -> Any:
     if metadata is None or not isinstance(metadata, dict):
         return None
 
@@ -1289,7 +1273,7 @@ def _parse_model_name_from_metadata(metadata: Optional[Dict[str, Any]]) -> Any:
 
 
 def _strip_langfuse_keys_from_dict(
-    metadata: Optional[Dict[str, Any]], keep_langfuse_trace_attributes: bool
+    metadata: dict[str, Any] | None, keep_langfuse_trace_attributes: bool
 ) -> Any:
     if metadata is None or not isinstance(metadata, dict):
         return metadata

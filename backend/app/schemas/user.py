@@ -1,12 +1,10 @@
-from typing import Optional
-
 from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    is_active: Optional[bool] = True
+    email: EmailStr | None = None
+    username: str | None = None
+    is_active: bool | None = True
     is_superuser: bool = False
 
 
@@ -17,18 +15,18 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(UserBase):
-    password: Optional[str] = None
+    password: str | None = None
 
 
 class UserInDBBase(UserBase):
-    id: Optional[int] = None
+    id: int | None = None
 
     class Config:
         orm_mode = True
 
 
 class User(UserInDBBase):
-    default_project_id: Optional[int] = None
+    default_project_id: int | None = None
 
 
 class UserInDB(UserInDBBase):
@@ -41,7 +39,7 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: Optional[int] = None
+    sub: int | None = None
 
 
 class UserAPIToken(BaseModel):
