@@ -48,7 +48,6 @@ app.add_middleware(
 )
 
 # Setup SQLAdmin (only in non-test environments)
-
 if os.getenv("TEST_ENV", "false").lower() != "true":
     from .admin import setup_admin
 
