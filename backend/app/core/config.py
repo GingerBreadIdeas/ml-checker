@@ -1,12 +1,9 @@
 import os
-from typing import Any, Dict, List, Optional
 
 try:
     from pydantic_settings import BaseSettings
 except ImportError:
     from pydantic import BaseSettings
-
-from pydantic import validator
 
 
 class Settings(BaseSettings):
@@ -20,14 +17,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # Database
-    DATABASE_URL: Optional[str] = os.getenv(
+    DATABASE_URL: str | None = os.getenv(
         "DATABASE_URL",
         "postgresql://postgres:postgres@localhost/ml-checker",
     )
 
     # CORS
     @property
-    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+    def BACKEND_CORS_ORIGINS(self) -> list[str]:  # noqa: N802
         frontend_host = os.getenv("FRONTEND_HOST", "")
         if frontend_host:
             protocol = (

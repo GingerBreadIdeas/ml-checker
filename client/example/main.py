@@ -1,9 +1,8 @@
+# ruff: noqa: E501 # prompts can be long
 #!/usr/bin/env python3
 
-import json
 import os
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -30,12 +29,12 @@ def main():
         )
         return
 
-    DATA_DIR = Path("data")
-    VECTOR_DB_DIR = Path("vector_db")
-    DATA_DIR.mkdir(exist_ok=True)
-    VECTOR_DB_DIR.mkdir(exist_ok=True)
+    data_dir = Path("data")
+    vector_db_dir = Path("vector_db")
+    data_dir.mkdir(exist_ok=True)
+    vector_db_dir.mkdir(exist_ok=True)
 
-    cat_facts_file = DATA_DIR / "cat-facts.txt"
+    cat_facts_file = data_dir / "cat-facts.txt"
 
     if not cat_facts_file.exists():
         try:
@@ -52,7 +51,7 @@ def main():
             return
 
     try:
-        with open(cat_facts_file, "r", encoding="utf-8") as f:
+        with open(cat_facts_file, encoding="utf-8") as f:
             content = f.read().strip()
 
         documents = [
@@ -63,7 +62,7 @@ def main():
         print(f"Failed to load cat facts: {e}")
         return
 
-    langfuse = Langfuse(
+    Langfuse(
         secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
         public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
         host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
@@ -98,9 +97,9 @@ def main():
                 )
             )
 
-    vectorstore_path = str(VECTOR_DB_DIR)
+    vectorstore_path = str(vector_db_dir)
 
-    if (VECTOR_DB_DIR / "chroma.sqlite3").exists():
+    if (vector_db_dir / "chroma.sqlite3").exists():
         vectorstore = Chroma(
             persist_directory=vectorstore_path, embedding_function=embeddings
         )

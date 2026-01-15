@@ -1,13 +1,12 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel
 
 
 class ChatMessageBase(BaseModel):
-    is_prompt_injection: Optional[bool] = False
+    is_prompt_injection: bool | None = False
     content: str
-    session_id: Optional[str] = None
+    session_id: str | None = None
 
 
 class ChatMessageCreate(ChatMessageBase):
@@ -22,10 +21,10 @@ class ChatMessageUpdate(BaseModel):
 class ChatMessage(BaseModel):
     id: int
     content: str
-    session_id: Optional[str] = None
+    session_id: str | None = None
     project_id: int
     created_at: datetime
-    response: Optional[str] = None
+    response: str | None = None
     is_prompt_injection: bool = False
 
     class Config:
@@ -33,4 +32,4 @@ class ChatMessage(BaseModel):
 
 
 class ChatMessageList(BaseModel):
-    messages: List[ChatMessage]
+    messages: list[ChatMessage]

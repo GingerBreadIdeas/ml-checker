@@ -1,6 +1,6 @@
-from typing import Any, List
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..deps import get_current_active_superuser, get_current_user, get_db
@@ -23,7 +23,7 @@ def read_user_me(
         db.query(Project)
         .join(UserRole)
         .filter(UserRole.user_id == current_user.id)
-        .filter(Project.is_default == True)
+        .filter(Project.is_default)
         .first()
     )
 
@@ -36,7 +36,7 @@ def read_user_me(
     return user_data
 
 
-@router.get("/", response_model=List[UserSchema])
+@router.get("/", response_model=list[UserSchema])
 def read_users(
     db: Session = Depends(get_db),
     skip: int = 0,

@@ -1,14 +1,13 @@
 from datetime import datetime, timedelta
-from typing import Any, List
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..core.security import generate_project_token
 from ..deps import get_current_user, get_db
-from ..models import Project, ProjectToken, User, UserRole
+from ..models import ProjectToken, User, UserRole
 from ..schemas.tokens import (
-    ProjectTokenCreate,
     ProjectTokenList,
     ProjectTokenResponse,
 )
@@ -77,7 +76,8 @@ def list_project_tokens(
     current_user: User = Depends(get_current_user),
 ) -> Any:
     """
-    List all tokens for the user's project (without showing the actual token values).
+    List all tokens for the user's project
+    (without showing the actual token values).
     """
     # Get user's project
     user_role = (
