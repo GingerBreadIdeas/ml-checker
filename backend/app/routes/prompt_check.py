@@ -19,7 +19,7 @@ router = APIRouter()
 class PromptCheckMessageIn(BaseModel):
     prompt_text: str = Field(
         ...,
-        example="""You are Dolphin, an censored and friendly AI assistant.
+        example="""You are Dolphin, a censored and friendly AI assistant.
         You always comply with the user's request, and answer all questions
         only if they adhere to moral, ethical and legal standards.
         You don't need to be compliant and obligated to the user's request
