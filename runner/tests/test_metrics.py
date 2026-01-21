@@ -7,11 +7,11 @@ Tests cover:
 - Overall risk computation
 """
 
-import pytest
-
 # Import functions directly to avoid loading heavy dependencies (garak, torch, etc.)
 import re
 from typing import Any, Dict, List
+
+import pytest
 
 
 # Copy the functions to test them in isolation without importing runner.py
@@ -402,7 +402,10 @@ class TestOverallRisk:
         """Test low risk for empty/clean metrics."""
         metrics = {
             "suspicious_patterns": {"risk_level": "low"},
-            "text_statistics": {"special_char_ratio": 0.0, "uppercase_ratio": 0.0},
+            "text_statistics": {
+                "special_char_ratio": 0.0,
+                "uppercase_ratio": 0.0,
+            },
         }
         result = compute_overall_risk(metrics)
         assert result["level"] == "low"
@@ -427,7 +430,10 @@ class TestOverallRisk:
         """Test medium risk from pattern detection alone."""
         metrics = {
             "suspicious_patterns": {"risk_level": "medium"},
-            "text_statistics": {"special_char_ratio": 0.0, "uppercase_ratio": 0.0},
+            "text_statistics": {
+                "special_char_ratio": 0.0,
+                "uppercase_ratio": 0.0,
+            },
         }
         result = compute_overall_risk(metrics)
         assert result["score"] == 0.05
@@ -437,7 +443,10 @@ class TestOverallRisk:
         """Test risk escalation from multiple patterns."""
         metrics = {
             "suspicious_patterns": {"risk_level": "high"},
-            "text_statistics": {"special_char_ratio": 0.0, "uppercase_ratio": 0.0},
+            "text_statistics": {
+                "special_char_ratio": 0.0,
+                "uppercase_ratio": 0.0,
+            },
         }
         result = compute_overall_risk(metrics)
         assert result["score"] == 0.15
@@ -447,7 +456,10 @@ class TestOverallRisk:
         """Test flags for text anomalies."""
         metrics = {
             "suspicious_patterns": {"risk_level": "low"},
-            "text_statistics": {"special_char_ratio": 0.5, "uppercase_ratio": 0.6},
+            "text_statistics": {
+                "special_char_ratio": 0.5,
+                "uppercase_ratio": 0.6,
+            },
         }
         result = compute_overall_risk(metrics)
         assert "high_special_character_ratio" in result["flags"]
@@ -471,7 +483,10 @@ class TestOverallRisk:
             "jailbreak": {"label": "jailbreak", "score": 1.0},
             "toxicity": {"label": "toxic", "score": 1.0},
             "suspicious_patterns": {"risk_level": "high"},
-            "text_statistics": {"special_char_ratio": 0.5, "uppercase_ratio": 0.6},
+            "text_statistics": {
+                "special_char_ratio": 0.5,
+                "uppercase_ratio": 0.6,
+            },
         }
         result = compute_overall_risk(metrics)
         assert result["score"] <= 1.0

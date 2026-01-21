@@ -112,8 +112,7 @@ def main():
         )
         vectorstore.persist()
 
-    prompt_template = ChatPromptTemplate.from_template(
-        """
+    prompt_template = ChatPromptTemplate.from_template("""
     You are a helpful assistant that answers questions based on the provided context.
     Use the context below to answer the user's question. If the context doesn't contain
     enough information to answer the question, say so honestly.
@@ -124,8 +123,7 @@ def main():
     Question: {question}
 
     Answer:
-    """
-    )
+    """)
 
     print("\n🐱 Cat Facts RAG Chatbot with Langfuse Integration")
     print("=" * 50)
