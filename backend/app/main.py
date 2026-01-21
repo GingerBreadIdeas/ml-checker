@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -21,8 +22,22 @@ from .models import (
     UserRole,
 )
 from .routes import api_router
+from .tasks import flush_message_queue
 
 logger = logging.getLogger(__name__)
+
+
+# Periodic task to flush message queue
+async def periodic_queue_flush():
+    """Periodically flush the message queue to ensure batches are processed"""
+    flush_interval = float(os.getenv("METRICS_BATCH_TIMEOUT", "5.0"))
+    while True:
+        try:
+            await asyncio.sleep(flush_interval)
+            await flush_message_queue.kiq()
+            logger.debug("Triggered periodic queue flush")
+        except Exception as e:
+            logger.error(f"Error in periodic queue flush: {e}")
 
 
 @asynccontextmanager
@@ -41,11 +56,22 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
 
+    # Start periodic queue flush task
+    flush_task = asyncio.create_task(periodic_queue_flush())
+    logger.info("Started periodic message queue flush task")
+
     try:
         yield
     finally:
         if os.getenv("TEST_ENV", "false").lower() != "true":
             await broker.shutdown()
+        # Cancel the flush task
+        flush_task.cancel()
+        try:
+            await flush_task
+        except asyncio.CancelledError:
+            pass
+        await broker.shutdown()
 
 
 app = FastAPI(title="ML-Checker API", lifespan=lifespan)

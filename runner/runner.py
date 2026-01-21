@@ -5,6 +5,8 @@ import importlib
 import json
 import os
 import re
+import time
+from collections import deque
 from typing import Any, Dict, List, Union
 
 import garak.cli
@@ -48,6 +50,17 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Use the newer recommended approach to avoid the warning
 Base = declarative_base()
 JSONPortable = JSON().with_variant(JSONB, "postgresql")
+
+# Batch Processing Configuration
+BATCH_SIZE = int(
+    os.getenv("METRICS_BATCH_SIZE", "10")
+)  # Max messages per batch
+BATCH_TIMEOUT = float(
+    os.getenv("METRICS_BATCH_TIMEOUT", "5.0")
+)  # Max seconds to wait
+message_queue: deque = deque()
+last_batch_time = time.time()
+queue_lock = asyncio.Lock()
 
 
 # Define Prompt model directly in this file
@@ -281,6 +294,181 @@ def calculate_metrics(message: str) -> Dict[str, Any]:
         metrics_results["suspicious_patterns"] = {"error": str(e)}
 
     return metrics_results
+
+
+def calculate_metrics_batch(messages: List[str]) -> List[Dict[str, Any]]:
+    """
+    Calculate comprehensive security and content metrics for a batch of messages.
+    This is more efficient than processing messages individually as models are loaded once.
+
+    Args:
+        messages: List of message strings to analyze
+
+    Returns:
+        List of metric dictionaries, one per message in the same order
+    """
+    if not messages:
+        return []
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(
+        f"Running batch metrics calculation for {len(messages)} messages on device: {device}"
+    )
+
+    batch_results = []
+
+    # Load all models once
+    try:
+        # 1. Prompt Injection Detection
+        logger.debug("Loading prompt injection model...")
+        pi_tokenizer = AutoTokenizer.from_pretrained(
+            "ProtectAI/deberta-v3-base-prompt-injection"
+        )
+        pi_model = AutoModelForSequenceClassification.from_pretrained(
+            "ProtectAI/deberta-v3-base-prompt-injection"
+        )
+        pi_classifier = pipeline(
+            "text-classification",
+            model=pi_model,
+            tokenizer=pi_tokenizer,
+            truncation=True,
+            max_length=512,
+            device=device,
+        )
+
+        # 2. Toxicity Detection
+        logger.debug("Loading toxicity model...")
+        toxicity_classifier = pipeline(
+            "text-classification",
+            model="unitary/toxic-bert",
+            truncation=True,
+            max_length=512,
+            device=device,
+        )
+
+        # 3. Sentiment Analysis
+        logger.debug("Loading sentiment model...")
+        sentiment_classifier = pipeline(
+            "sentiment-analysis",
+            model="nlptown/bert-base-multilingual-uncased-sentiment",
+            truncation=True,
+            max_length=512,
+            device=device,
+        )
+
+        # 4. Jailbreak Detection
+        logger.debug("Loading jailbreak model...")
+        jailbreak_classifier = pipeline(
+            "text-classification",
+            model="jackhhao/jailbreak-classifier",
+            truncation=True,
+            max_length=512,
+            device=device,
+        )
+
+        # Process all messages through each model in batch
+        logger.debug("Processing batch through models...")
+        pi_results = pi_classifier(messages)
+        toxicity_results = toxicity_classifier(messages)
+        sentiment_results = sentiment_classifier(messages)
+        jailbreak_results = jailbreak_classifier(messages)
+
+        # Combine results for each message
+        for i, message in enumerate(messages):
+            metrics_results: Dict[str, Any] = {}
+
+            # Prompt Injection
+            try:
+                metrics_results["prompt_injection"] = {
+                    "label": pi_results[i]["label"],
+                    "score": pi_results[i]["score"],
+                    "model": "ProtectAI/deberta-v3-base-prompt-injection",
+                }
+            except Exception as e:
+                logger.error(f"Prompt injection failed for message {i}: {e}")
+                metrics_results["prompt_injection"] = {"error": str(e)}
+
+            # Toxicity
+            try:
+                metrics_results["toxicity"] = {
+                    "label": toxicity_results[i]["label"],
+                    "score": toxicity_results[i]["score"],
+                    "model": "unitary/toxic-bert",
+                }
+            except Exception as e:
+                logger.error(f"Toxicity detection failed for message {i}: {e}")
+                metrics_results["toxicity"] = {"error": str(e)}
+
+            # Sentiment
+            try:
+                star_label = sentiment_results[i]["label"]
+                stars = int(star_label.split()[0])
+                if stars <= 2:
+                    sentiment_label = "negative"
+                elif stars == 3:
+                    sentiment_label = "neutral"
+                else:
+                    sentiment_label = "positive"
+
+                metrics_results["sentiment"] = {
+                    "label": sentiment_label,
+                    "stars": stars,
+                    "score": sentiment_results[i]["score"],
+                    "model": "nlptown/bert-base-multilingual-uncased-sentiment",
+                }
+            except Exception as e:
+                logger.error(f"Sentiment analysis failed for message {i}: {e}")
+                metrics_results["sentiment"] = {"error": str(e)}
+
+            # Jailbreak
+            try:
+                metrics_results["jailbreak"] = {
+                    "label": jailbreak_results[i]["label"],
+                    "score": jailbreak_results[i]["score"],
+                    "model": "jackhhao/jailbreak-classifier",
+                }
+            except Exception as e:
+                logger.error(
+                    f"Jailbreak detection failed for message {i}: {e}"
+                )
+                metrics_results["jailbreak"] = {"error": str(e)}
+
+            # Text Statistics (rule-based)
+            try:
+                text_stats = calculate_text_statistics(message)
+                metrics_results["text_statistics"] = text_stats
+            except Exception as e:
+                logger.error(f"Text statistics failed for message {i}: {e}")
+                metrics_results["text_statistics"] = {"error": str(e)}
+
+            # Suspicious Patterns (rule-based)
+            try:
+                suspicious_patterns = detect_suspicious_patterns(message)
+                metrics_results["suspicious_patterns"] = suspicious_patterns
+            except Exception as e:
+                logger.error(
+                    f"Suspicious patterns failed for message {i}: {e}"
+                )
+                metrics_results["suspicious_patterns"] = {"error": str(e)}
+
+            batch_results.append(metrics_results)
+
+        logger.info(
+            f"Successfully processed batch of {len(messages)} messages"
+        )
+
+    except Exception as e:
+        logger.error(f"Batch processing failed: {e}")
+        # Fallback to individual processing
+        logger.warning("Falling back to individual message processing")
+        for message in messages:
+            try:
+                batch_results.append(calculate_metrics(message))
+            except Exception as inner_e:
+                logger.error(f"Individual processing also failed: {inner_e}")
+                batch_results.append({"error": str(inner_e)})
+
+    return batch_results
 
 
 def calculate_text_statistics(message: str) -> Dict[str, Any]:
@@ -584,6 +772,102 @@ async def process_message_metrics(
     """
     Replaces Kafka topic: compute_message_metrics
     Step 1 of 2-step workflow
+
+    This function now queues messages for batch processing instead of
+    processing them immediately. Messages are processed when either:
+    1. The batch reaches BATCH_SIZE messages, or
+    2. BATCH_TIMEOUT seconds have elapsed since the last batch
+    """
+    global last_batch_time
+
+    async with queue_lock:
+        # Add message to queue
+        message_queue.append(
+            {
+                "id": message_id,
+                "content": content,
+                "options": options,
+            }
+        )
+        logger.debug(
+            f"Queued message {message_id}. Queue size: {len(message_queue)}"
+        )
+
+        # Check if we should process the batch
+        should_process = (
+            len(message_queue) >= BATCH_SIZE
+            or (time.time() - last_batch_time) >= BATCH_TIMEOUT
+        )
+
+        if should_process and len(message_queue) > 0:
+            # Extract batch from queue
+            batch = []
+            while message_queue and len(batch) < BATCH_SIZE:
+                batch.append(message_queue.popleft())
+
+            logger.info(f"Processing batch of {len(batch)} messages")
+            last_batch_time = time.time()
+
+            # Process batch outside the lock
+            asyncio.create_task(_process_batch(batch))
+
+
+async def _process_batch(batch: List[Dict[str, Any]]) -> None:
+    """
+    Internal function to process a batch of messages.
+    Runs ML inference on all messages in parallel and saves results.
+    """
+    try:
+        # Extract messages content for batch processing
+        messages_content = [msg["content"] for msg in batch]
+
+        # Run batch metrics calculation
+        batch_metrics = calculate_metrics_batch(messages_content)
+
+        # Save results for each message
+        for i, msg_data in enumerate(batch):
+            try:
+                message = {
+                    "id": msg_data["id"],
+                    "metrics": batch_metrics[i],
+                    "options": msg_data["options"],
+                }
+                save_message_metrics(message)
+            except Exception as e:
+                logger.error(
+                    f"Failed to save metrics for message {msg_data['id']}: {e}"
+                )
+
+        logger.info(
+            f"Successfully processed and saved batch of {len(batch)} messages"
+        )
+
+    except Exception as e:
+        logger.error(f"Batch processing failed: {e}")
+        # Fallback: process individually
+        logger.warning("Falling back to individual processing")
+        for msg_data in batch:
+            try:
+                metrics = calculate_metrics(msg_data["content"])
+                message = {
+                    "id": msg_data["id"],
+                    "metrics": metrics,
+                    "options": msg_data["options"],
+                }
+                save_message_metrics(message)
+            except Exception as inner_e:
+                logger.error(
+                    f"Individual processing failed for message {msg_data['id']}: {inner_e}"
+                )
+
+
+@broker.task(task_name="runner:process_message_metrics_single", max_retries=0)
+async def process_message_metrics_single(
+    message_id: int, content: str, options: dict
+) -> None:
+    """
+    Legacy single-message processing task for backward compatibility
+    or when batch processing is not desired.
     """
     # Run ML inference
     metrics = calculate_metrics(content)
@@ -594,3 +878,28 @@ async def process_message_metrics(
         "options": options,
     }
     save_message_metrics(message)
+
+
+@broker.task(task_name="runner:flush_message_queue", max_retries=0)
+async def flush_message_queue() -> None:
+    """
+    Periodic task to flush any remaining messages in the queue.
+    Should be called periodically (e.g., every BATCH_TIMEOUT seconds)
+    to ensure messages don't wait indefinitely.
+    """
+    global last_batch_time
+
+    async with queue_lock:
+        if len(message_queue) > 0:
+            # Extract all remaining messages
+            batch = []
+            while message_queue:
+                batch.append(message_queue.popleft())
+
+            logger.info(
+                f"Flushing queue: processing {len(batch)} remaining messages"
+            )
+            last_batch_time = time.time()
+
+            # Process batch outside the lock
+            asyncio.create_task(_process_batch(batch))
