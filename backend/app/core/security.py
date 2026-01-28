@@ -5,7 +5,6 @@ from typing import Any, Optional, Union
 
 from jose import jwt
 from passlib.context import CryptContext
-from pydantic import ValidationError
 
 from ..core.config import settings
 

@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
+from app.database import Base
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
@@ -12,11 +13,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app import models  # Import models so they're registered with Base
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.database import Base
+
 
 target_metadata = Base.metadata
 
