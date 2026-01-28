@@ -15,7 +15,9 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.database import Base  # noqa: E402  # Import after config setup required by Alembic
+from app.database import (  # noqa: I001, E402  # Import after config setup required by Alembic
+    Base,
+)
 
 target_metadata = Base.metadata
 
