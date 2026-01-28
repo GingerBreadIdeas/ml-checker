@@ -1,12 +1,11 @@
 import logging
 import os
-from typing import List, Tuple
 
 import numpy as np
 import torch
 from sklearn.manifold import TSNE
 
-# Set this environment variable to avoid parallelism-related warnings and errors
+# Set this environment variable to avoid parallelism-related warnings/errors
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Setup logging
@@ -24,7 +23,8 @@ try:
     logger.info("Successfully imported transformers")
 except Exception as e:
     logger.warning(
-        f"Transformers not available: {str(e)}. Embedding functionality will be disabled."
+        f"Transformers not available: {str(e)}. "
+        "Embedding functionality will be disabled."
     )
 
 # Load model and tokenizer once at module level for better performance
@@ -42,14 +42,15 @@ if TRANSFORMERS_AVAILABLE:
         logger.info("Successfully pre-loaded tokenizer and model")
     except Exception as e:
         logger.warning(
-            f"Failed to pre-load model: {str(e)}. Embeddings will load on-demand."
+            f"Failed to pre-load model: {str(e)}. "
+            "Embeddings will load on-demand."
         )
         _TOKENIZER = None
         _MODEL = None
 
 
 def create_embeddings(
-    texts: List[str],
+    texts: list[str],
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
 ) -> np.ndarray:
     """
@@ -132,8 +133,8 @@ def reduce_to_2d(embeddings: np.ndarray, random_state: int = 42) -> np.ndarray:
 
 
 def create_2d_embeddings_for_texts(
-    texts: List[str],
-) -> Tuple[np.ndarray, np.ndarray]:
+    texts: list[str],
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Create embeddings for texts and reduce to 2D for visualization.
 

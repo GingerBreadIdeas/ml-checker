@@ -1,5 +1,5 @@
+from collections.abc import Generator
 from datetime import datetime
-from typing import Generator, Optional, Union
 
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -65,7 +65,7 @@ def get_current_active_superuser(
 
 
 def get_project_from_token(
-    db: Session = Depends(get_db), authorization: Optional[str] = Header(None)
+    db: Session = Depends(get_db), authorization: str | None = Header(None)
 ) -> Project:
     """Get project from API token authentication.
 
@@ -92,7 +92,7 @@ def get_project_from_token(
 
     # Try to find matching project token
     project_tokens = (
-        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+        db.query(ProjectToken).filter(ProjectToken.is_active).all()
     )
 
     for pt in project_tokens:
@@ -117,12 +117,13 @@ def get_project_from_token(
 
 
 def get_current_user_or_project(
-    db: Session = Depends(get_db), authorization: Optional[str] = Header(None)
-) -> Union[tuple[User, None], tuple[None, Project]]:
+    db: Session = Depends(get_db), authorization: str | None = Header(None)
+) -> tuple[User, None] | tuple[None, Project]:
     """Get either current user (JWT) or project (API token).
 
     Returns:
-        tuple: (user, project) where one is None and the other is the authenticated entity
+        tuple: (user, project) where one is None
+        and the other is the authenticated entity
     """
     if not authorization:
         raise HTTPException(
@@ -156,7 +157,7 @@ def get_current_user_or_project(
 
     # Then try project token
     project_tokens = (
-        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+        db.query(ProjectToken).filter(ProjectToken.is_active).all()
     )
 
     for pt in project_tokens:

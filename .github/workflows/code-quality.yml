@@ -5,10 +5,12 @@ on:
     branches: [ master, main ]
     paths:
       - 'backend/**/*.py'
+      - 'runner/**/*.py'
+      - 'scripts/**/*.py'
       - '.github/workflows/code-quality.yml'
 
 jobs:
-  blackisort:
+  ruff:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +19,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     - name: Install uv
       uses: astral-sh/setup-uv@v4
@@ -26,22 +28,22 @@ jobs:
       run: |
         uv sync
 
-    - name: Check code formatting with Black
+    - name: Check linting with Ruff
       run: |
-        uv run black --check --diff .
+        uv run ruff check --diff .
 
-    - name: Check import sorting with isort
+    - name: Check formatting with Ruff
       run: |
-        uv run isort --check --diff .
+        uv run ruff format --check --diff .
 
     - name: Summary
       if: failure()
       run: |
         echo "❌ Code quality checks failed!"
         echo ""
-        echo "To fix formatting issues locally, run:"
-        echo "  isort ."
-        echo "  black ."
+        echo "To fix linting and formatting issues locally, run:"
+        echo "  uv run ruff check --fix ."
+        echo "  uv run ruff format ."
         echo ""
         echo "Or install pre-commit hooks to check before each commit:"
         echo "  uv run pre-commit install"

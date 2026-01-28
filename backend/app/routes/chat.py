@@ -1,6 +1,4 @@
-import json
-import logging
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from loguru import logger
@@ -18,7 +16,6 @@ from ..schemas.message import (
 from ..tasks import process_message_metrics
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 default_metrics_options = {"llama_guard": {}}
 
@@ -26,8 +23,8 @@ default_metrics_options = {"llama_guard": {}}
 def get_project_with_access(
     db: Session,
     current_user: User,
-    project_id: Optional[int] = None,
-    project_name: Optional[str] = None,
+    project_id: int | None = None,
+    project_name: str | None = None,
 ) -> Project:
     """
     Get project by ID or name and verify user has access.
@@ -86,7 +83,8 @@ async def trigger_metrics_computation(message: ChatMessage, metrics_options):
         )
     except Exception as e:
         logger.exception(
-            f"Failed to queue message {message.id} for metrics computation: {e}"
+            f"Failed to queue message {message.id} "
+            f"for metrics computation: {e}"
         )
 
 
@@ -102,7 +100,7 @@ async def create_message(
     """
 
     message = ChatMessage(
-        session_id=message_in.session_id,  # Just use the string session_id directly
+        session_id=message_in.session_id,  # Use session_id directly
         project_id=project.id,
         content=message_in.content,
         is_prompt_injection=message_in.is_prompt_injection,
@@ -115,7 +113,7 @@ async def create_message(
         await trigger_metrics_computation(message, default_metrics_options)
     except Exception as e:
         logger.exception(f"Failed to queue message for metrics: {e}")
-        # Continue execution - the API should still work even if task queue fails
+        # Continue - the API should still work even if task queue fails
 
     finally:
         return message
@@ -125,10 +123,10 @@ async def create_message(
 def read_messages(
     *,
     db: Session = Depends(get_db),
-    project_id: Optional[int] = Query(
+    project_id: int | None = Query(
         None, description="Project ID to get messages from"
     ),
-    project_name: Optional[str] = Query(
+    project_name: str | None = Query(
         None, description="Project name to get messages from"
     ),
     skip: int = 0,
@@ -215,10 +213,10 @@ def read_message(
     *,
     db: Session = Depends(get_db),
     message_id: int = Path(..., ge=1),
-    project_id: Optional[int] = Query(
+    project_id: int | None = Query(
         None, description="Project ID containing the message"
     ),
-    project_name: Optional[str] = Query(
+    project_name: str | None = Query(
         None, description="Project name containing the message"
     ),
     current_user: User = Depends(get_current_user),
@@ -249,10 +247,10 @@ def delete_message(
     *,
     db: Session = Depends(get_db),
     message_id: int = Path(..., ge=1),
-    project_id: Optional[int] = Query(
+    project_id: int | None = Query(
         None, description="Project ID containing the message"
     ),
-    project_name: Optional[str] = Query(
+    project_name: str | None = Query(
         None, description="Project name containing the message"
     ),
     current_user: User = Depends(get_current_user),
@@ -286,10 +284,10 @@ def update_message(
     *,
     db: Session = Depends(get_db),
     message_id: int = Path(..., ge=1),
-    project_id: Optional[int] = Query(
+    project_id: int | None = Query(
         None, description="Project ID containing the message"
     ),
-    project_name: Optional[str] = Query(
+    project_name: str | None = Query(
         None, description="Project name containing the message"
     ),
     message_in: ChatMessageUpdate,

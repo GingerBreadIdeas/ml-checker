@@ -6,16 +6,20 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pre-commit>=4.5.0",
-    "black>=23.3.0",
+    "ruff>=0.8.0",
     "pytest>=7.3.1",
-    "isort>=7.0.0",
 ]
 
 
-[tool.black]
+[tool.ruff]
 line-length = 79
-[tool.isort]
-profile = "black"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.uv.workspace]
 members = [

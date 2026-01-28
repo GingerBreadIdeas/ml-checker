@@ -1,11 +1,10 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Optional, Union
+from typing import Any
 
 from jose import jwt
 from passlib.context import CryptContext
-from pydantic import ValidationError
 
 from ..core.config import settings
 
@@ -15,7 +14,7 @@ ALGORITHM = "HS256"
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
