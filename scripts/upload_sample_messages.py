@@ -70,7 +70,7 @@ def upload_message(
 def main():
     args = parse_args()
 
-    print(f"Loading prompt-injections dataset from Hugging Face...")
+    print("Loading prompt-injections dataset from Hugging Face...")
 
     # Load the dataset
     try:
@@ -99,7 +99,7 @@ def main():
     print(
         f"Found {len(normal_messages)} normal messages and {len(injection_messages)} injection messages"
     )
-    print(f"Using project API token for authentication")
+    print("Using project API token for authentication")
 
     # Sample the required number of messages
     normal_sample = random.sample(

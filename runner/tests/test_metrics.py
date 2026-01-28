@@ -530,7 +530,7 @@ class TestIntegration:
         stats = calculate_text_statistics(message)
         patterns = detect_suspicious_patterns(message)
         metrics = {"text_statistics": stats, "suspicious_patterns": patterns}
-        risk = compute_overall_risk(metrics)
+        compute_overall_risk(metrics)
 
         assert "code_injection" in patterns["detected_patterns"]
         assert stats["special_char_ratio"] > 0.2

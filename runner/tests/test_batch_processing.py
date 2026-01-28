@@ -4,13 +4,19 @@ Unit tests for batch message processing in runner.py.
 
 import asyncio
 from collections import deque
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Import the functions we want to test
-# Note: In a real scenario, these would be imported from runner.py
-# For this test file, we'll need to adjust the import path based on your project structure
+from runner import (
+    BATCH_SIZE,
+    _process_batch,
+    calculate_metrics_batch,
+    flush_message_queue,
+    message_queue,
+    process_message_metrics,
+    queue_lock,
+)
 
 
 class TestBatchProcessing:
@@ -19,8 +25,6 @@ class TestBatchProcessing:
     @pytest.mark.asyncio
     async def test_batch_size_trigger(self):
         """Test that batch is processed when BATCH_SIZE is reached."""
-        from runner import BATCH_SIZE, message_queue, process_message_metrics
-
         # Clear the queue
         message_queue.clear()
 
@@ -41,13 +45,11 @@ class TestBatchProcessing:
     @pytest.mark.asyncio
     async def test_timeout_trigger(self):
         """Test that batch is processed after timeout even with fewer messages."""
-        from runner import flush_message_queue, message_queue
-
         # Clear the queue
         message_queue.clear()
 
-        with patch("runner._process_batch") as mock_process:
-            with patch("runner.process_message_metrics") as mock_queue:
+        with patch("runner._process_batch"):
+            with patch("runner.process_message_metrics"):
                 # Add a few messages (less than BATCH_SIZE)
                 message_queue.append(
                     {"id": 1, "content": "Test message", "options": {}}
@@ -64,8 +66,6 @@ class TestBatchProcessing:
 
     def test_calculate_metrics_batch_empty(self):
         """Test batch metrics calculation with empty list."""
-        from runner import calculate_metrics_batch
-
         result = calculate_metrics_batch([])
         assert result == []
 
@@ -76,8 +76,6 @@ class TestBatchProcessing:
         self, mock_model, mock_tokenizer, mock_pipeline
     ):
         """Test batch metrics calculation with multiple messages."""
-        from runner import calculate_metrics_batch
-
         # Mock the ML models
         mock_pipeline_instance = MagicMock()
         mock_pipeline.return_value = mock_pipeline_instance
@@ -118,7 +116,6 @@ class TestBatchProcessing:
     @patch("runner.calculate_metrics_batch")
     def test_batch_processing_fallback(self, mock_batch_calc):
         """Test that individual processing is used as fallback when batch fails."""
-        from runner import calculate_metrics
 
         # Make batch calculation fail
         mock_batch_calc.side_effect = Exception("Model loading failed")
@@ -127,7 +124,7 @@ class TestBatchProcessing:
             mock_single.return_value = {"prompt_injection": {"label": "SAFE"}}
 
             # This should trigger fallback
-            messages = ["Test message 1", "Test message 2"]
+            _ = ["Test message 1", "Test message 2"]
 
             # In the actual implementation, the fallback should call calculate_metrics
             # We're testing that the fallback mechanism exists
@@ -153,8 +150,6 @@ class TestBatchProcessing:
     @pytest.mark.asyncio
     async def test_concurrent_queue_access(self):
         """Test that queue lock prevents race conditions."""
-        from runner import message_queue, queue_lock
-
         message_queue.clear()
 
         async def add_messages(start_id, count):
@@ -182,8 +177,6 @@ class TestBatchProcessing:
         self, mock_calc_batch, mock_save
     ):
         """Test that _process_batch saves results for all messages."""
-        from runner import _process_batch
-
         # Mock batch calculation results
         mock_calc_batch.return_value = [
             {"prompt_injection": {"label": "SAFE", "score": 0.9}},
@@ -224,8 +217,6 @@ class TestBatchMetricsEfficiency:
         self, mock_model, mock_tokenizer, mock_pipeline
     ):
         """Test that models are loaded only once for batch processing."""
-        from runner import calculate_metrics_batch
-
         mock_pipeline_instance = MagicMock()
         mock_pipeline.return_value = mock_pipeline_instance
 
@@ -248,19 +239,81 @@ class TestBatchMetricsEfficiency:
 class TestBatchProcessingIntegration:
     """Integration tests for the complete batch processing workflow."""
 
+    @patch("runner.save_message_metrics")
+    @patch("runner.calculate_metrics_batch")
     @pytest.mark.asyncio
-    async def test_end_to_end_batch_flow(self):
+    async def test_end_to_end_batch_flow(self, mock_calc_batch, mock_save):
         """Test the complete flow from message queuing to batch processing."""
-        from runner import message_queue
-
-        # This is a placeholder for a full integration test
-        # In a real scenario, you would:
-        # 1. Queue multiple messages
-        # 2. Wait for batch to be processed
-        # 3. Verify results are saved to database
-        # 4. Check that metrics are correctly calculated
-
+        # Clear the queue
         message_queue.clear()
+
+        # Mock batch calculation results
+        mock_calc_batch.return_value = [
+            {
+                "prompt_injection": {"label": "SAFE", "score": 0.95},
+                "toxicity": {"label": "non-toxic", "score": 0.9},
+                "sentiment": {"label": "positive", "stars": 4, "score": 0.85},
+                "jailbreak": {"label": "safe", "score": 0.92},
+            }
+            for _ in range(BATCH_SIZE)
+        ]
+
+        # 1. Queue BATCH_SIZE messages to trigger batch processing
+        with patch(
+            "runner._process_batch", wraps=_process_batch
+        ) as mock_process:
+            for i in range(BATCH_SIZE):
+                await process_message_metrics(
+                    message_id=i,
+                    content=f"Test message {i}",
+                    options={"project_id": 1},
+                )
+
+            # Allow async tasks to execute
+            await asyncio.sleep(0.2)
+
+            # 2. Verify batch was processed
+            assert (
+                mock_process.called
+            ), "Batch processing should have been triggered"
+
+        # 3. Verify results were saved for each message
+        assert (
+            mock_save.call_count == BATCH_SIZE
+        ), f"Expected {BATCH_SIZE} saves, got {mock_save.call_count}"
+
+        # 4. Verify queue is empty after processing
+        assert (
+            len(message_queue) == 0
+        ), "Queue should be empty after batch processing"
+
+    @patch("runner.save_message_metrics")
+    @patch("runner.calculate_metrics_batch")
+    @pytest.mark.asyncio
+    async def test_partial_batch_flush(self, mock_calc_batch, mock_save):
+        """Test flushing a partial batch (less than BATCH_SIZE messages)."""
+        message_queue.clear()
+
+        partial_count = BATCH_SIZE // 2
+
+        mock_calc_batch.return_value = [
+            {"prompt_injection": {"label": "SAFE", "score": 0.9}}
+            for _ in range(partial_count)
+        ]
+
+        # Add fewer messages than BATCH_SIZE
+        async with queue_lock:
+            for i in range(partial_count):
+                message_queue.append(
+                    {"id": i, "content": f"Partial message {i}", "options": {}}
+                )
+
+        # Flush should process remaining messages
+        await flush_message_queue()
+        await asyncio.sleep(0.2)
+
+        # Verify all messages were saved
+        assert mock_save.call_count == partial_count
         assert len(message_queue) == 0
 
 

@@ -1,12 +1,10 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 try:
     from pydantic_settings import BaseSettings
 except ImportError:
     from pydantic import BaseSettings
-
-from pydantic import validator
 
 
 class Settings(BaseSettings):

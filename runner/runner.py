@@ -1,36 +1,18 @@
 #!/usr/bin/env python
 
 import asyncio
-import importlib
 import json
 import os
 import re
 import time
 from collections import deque
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import garak.cli
 import llm_caller
 import ollama
 import torch
-from garak import _config
-from garak.generators.base import Generator
 from loguru import logger
-from taskiq_pg.asyncpg import AsyncpgBroker
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline,
-)
-
-DB_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ml-checker"
-)
-broker = AsyncpgBroker(
-    dsn=DB_URL,
-)
-
-
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -44,6 +26,19 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import func
+from taskiq_pg.asyncpg import AsyncpgBroker
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    pipeline,
+)
+
+DB_URL = os.getenv(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ml-checker"
+)
+broker = AsyncpgBroker(
+    dsn=DB_URL,
+)
 
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

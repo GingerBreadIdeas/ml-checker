@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -63,7 +61,7 @@ def main():
         print(f"Failed to load cat facts: {e}")
         return
 
-    langfuse = Langfuse(
+    Langfuse(
         secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
         public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
         host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),

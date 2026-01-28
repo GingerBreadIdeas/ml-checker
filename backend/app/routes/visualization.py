@@ -1,16 +1,14 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from bokeh.embed import file_html
-from bokeh.layouts import column, row
+from bokeh.layouts import column
 from bokeh.models import (
     BooleanFilter,
     CDSView,
-    Circle,
     ColumnDataSource,
     DataTable,
     HoverTool,
-    MultiLine,
     TableColumn,
 )
 from bokeh.plotting import figure
@@ -120,7 +118,6 @@ def get_message_embeddings_json(
     - Prompt injection messages displayed as red dots
     - Interactive tooltips showing message details
     """
-    import json
 
     from bokeh.embed import json_item
 
@@ -240,7 +237,7 @@ def get_message_embeddings_json(
     p.add_layout(legend, "right")
 
     # Create data table
-    from bokeh.models import DataTable, StringFormatter, TableColumn
+    from bokeh.models import DataTable, TableColumn
 
     columns = [
         TableColumn(field="message_id", title="ID", width=60),
@@ -355,7 +352,7 @@ def get_message_embeddings_html(
     p.add_tools(hover)
 
     # Create scatter plot for all points
-    scatter = p.scatter(
+    p.scatter(
         "x",
         "y",
         source=source,
