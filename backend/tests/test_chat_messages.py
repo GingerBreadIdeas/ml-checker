@@ -1,4 +1,3 @@
-import pytest
 from app.models import ChatMessage
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -108,7 +107,7 @@ class TestChatMessages:
     ):
         """Test successful retrieval of messages."""
         # Get the user's default project (auto-created when user was created)
-        from app.models import Project, UserRole
+        from app.models import UserRole
 
         user_role = (
             db.query(UserRole).filter(UserRole.user_id == test_user.id).first()

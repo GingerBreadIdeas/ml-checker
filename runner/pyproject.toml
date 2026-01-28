@@ -12,6 +12,8 @@ dependencies = [
     "loguru>=0.7.3",
     "sqlalchemy>=2.0.17",
     "psycopg2-binary>=2.9.6",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.21.0",
 ]
 
 
@@ -52,3 +54,6 @@ explicit = true
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

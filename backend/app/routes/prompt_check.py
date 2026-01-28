@@ -1,24 +1,20 @@
 #!/usr/bin/env python
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List
+from typing import Optional as PydanticOptional
 
 from fastapi import APIRouter, Depends, Query
 from loguru import logger
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..broker import broker
 from ..database import get_db
 from ..deps import get_current_user, verify_project_access
-from ..models import Prompt, User, UserRole
+from ..models import Prompt, User
 from ..tasks import process_prompt_check
 
 router = APIRouter()
-
-from typing import Any, Dict
-from typing import Optional as PydanticOptional
-
-from pydantic import BaseModel, Field, validator
 
 
 class PromptCheckMessageIn(BaseModel):
@@ -141,7 +137,7 @@ def list_prompts(
 
     query = db.query(Prompt).filter(Prompt.project_id == project_id)
     if checked_only:
-        query = query.filter(Prompt.checked == True)
+        query = query.filter(Prompt.checked)
     total = query.count()
     prompts = (
         query.order_by(Prompt.created_at.desc())

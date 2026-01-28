@@ -1,6 +1,4 @@
-import json
-import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from loguru import logger
@@ -18,8 +16,6 @@ from ..schemas.message import (
 from ..tasks import process_message_metrics
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
-
 default_metrics_options = {"llama_guard": {}}
 
 

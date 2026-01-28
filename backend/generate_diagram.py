@@ -2,6 +2,7 @@
 """
 Generate database diagram from SQLAlchemy models
 """
+
 import os
 
 os.environ["DATABASE_URL"] = (
