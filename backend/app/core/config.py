@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from pydantic import field_validator
+from pydantic import ConfigDict, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -32,10 +32,11 @@ class Settings(BaseSettings):
             return [f"{protocol}://{frontend_host}"]
         return ["*"]
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        extra = "allow"
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="allow",
+    )
 
 
 settings = Settings()
