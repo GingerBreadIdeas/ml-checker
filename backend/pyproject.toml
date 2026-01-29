@@ -5,14 +5,15 @@ description = "Backend for ML-Checker application"
 authors = [{name = "Your Name", email = "your.email@example.com"}]
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.98.0",
+    "fastapi>=0.100.0",
     "uvicorn>=0.22.0",
     "sqlalchemy>=2.0.17",
     "taskiq-fastapi>=0.3.0",
     "taskiq>=0.11.0",
     "taskiq-postgres>=0.7.0",
     "psycopg2-binary>=2.9.6",
-    "pydantic>=1.10.9,<2.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
@@ -25,15 +26,17 @@ dependencies = [
     "loguru>=0.7.0",
     "pyyaml>=6.0.0",
     "transformers>=4.20.0",
-    "numpy==1.24.4",
+    "torch>=2.0.0",
+    "numpy>=1.24.4",
     "scikit-learn>=1.0.0",
     "bokeh>=3.0.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "black>=23.3.0",
     "pytest>=7.3.1",
+    "httpx>=0.23.0",
 ]
 
 [tool.setuptools.packages.find]

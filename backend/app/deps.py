@@ -92,7 +92,7 @@ def get_project_from_token(
 
     # Try to find matching project token
     project_tokens = (
-        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+        db.query(ProjectToken).filter(ProjectToken.is_active).all()
     )
 
     for pt in project_tokens:
@@ -156,7 +156,7 @@ def get_current_user_or_project(
 
     # Then try project token
     project_tokens = (
-        db.query(ProjectToken).filter(ProjectToken.is_active == True).all()
+        db.query(ProjectToken).filter(ProjectToken.is_active).all()
     )
 
     for pt in project_tokens:

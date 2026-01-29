@@ -3,7 +3,6 @@ SQLAlchemy models for the ML-Checker application.
 """
 
 import enum
-import uuid
 
 from sqlalchemy import (
     JSON,

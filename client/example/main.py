@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -63,7 +61,7 @@ def main():
         print(f"Failed to load cat facts: {e}")
         return
 
-    langfuse = Langfuse(
+    Langfuse(
         secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
         public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
         host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
@@ -112,8 +110,7 @@ def main():
         )
         vectorstore.persist()
 
-    prompt_template = ChatPromptTemplate.from_template(
-        """
+    prompt_template = ChatPromptTemplate.from_template("""
     You are a helpful assistant that answers questions based on the provided context.
     Use the context below to answer the user's question. If the context doesn't contain
     enough information to answer the question, say so honestly.
@@ -124,8 +121,7 @@ def main():
     Question: {question}
 
     Answer:
-    """
-    )
+    """)
 
     print("\n🐱 Cat Facts RAG Chatbot with Langfuse Integration")
     print("=" * 50)
