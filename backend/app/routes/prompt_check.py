@@ -18,7 +18,7 @@ router = APIRouter()
 from typing import Any, Dict
 from typing import Optional as PydanticOptional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PromptCheckMessageIn(BaseModel):
@@ -64,8 +64,7 @@ class PromptCheckOut(BaseModel):
     check_results: PydanticOptional[Dict[str, Any]] = None
     checked: bool = False
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PromptListResponse(BaseModel):
