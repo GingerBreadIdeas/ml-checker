@@ -1,0 +1,93 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**/*.py'
+      - 'runner/**/*.py'
+      - '.github/workflows/tests.yml'
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**/*.py'
+      - 'runner/**/*.py'
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ml-checker-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Sync dependencies
+      run: uv sync --dev
+
+    - name: Run backend tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ml-checker-test
+      run: uv run pytest tests/ -v --tb=short
+
+  runner-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runner
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Sync dependencies
+      run: uv sync --dev
+
+    - name: Run runner tests
+      run: uv run pytest tests/ -v --tb=short
+
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, runner-tests]
+    if: always()
+
+    steps:
+    - name: Check test results
+      run: |
+        if [[ "${{ needs.backend-tests.result }}" == "failure" ]] || [[ "${{ needs.runner-tests.result }}" == "failure" ]]; then
+          echo "Tests failed!"
+          exit 1
+        else
+          echo "Tests OK."
+        fi

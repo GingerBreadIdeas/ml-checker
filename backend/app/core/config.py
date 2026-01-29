@@ -1,12 +1,8 @@
 import os
 from typing import Any, Dict, List, Optional
 
-try:
-    from pydantic_settings import BaseSettings
-except ImportError:
-    from pydantic import BaseSettings
-
-from pydantic import validator
+from pydantic import ConfigDict, field_validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -36,9 +32,11 @@ class Settings(BaseSettings):
             return [f"{protocol}://{frontend_host}"]
         return ["*"]
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="allow",
+    )
 
 
 settings = Settings()

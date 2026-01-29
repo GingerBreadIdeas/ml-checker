@@ -2,6 +2,7 @@
 """
 Simple migration script to add metrics column to chat_messages table
 """
+
 import os
 import sys
 
@@ -24,16 +25,12 @@ def run_migration():
 
         with engine.connect() as conn:
             # Check if metrics column already exists
-            result = conn.execute(
-                text(
-                    """
+            result = conn.execute(text("""
                 SELECT column_name 
                 FROM information_schema.columns 
                 WHERE table_name = 'chat_messages' 
                 AND column_name = 'metrics'
-            """
-                )
-            )
+            """))
 
             if result.fetchone():
                 print(

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ChatMessageBase(BaseModel):
@@ -28,8 +28,7 @@ class ChatMessage(BaseModel):
     response: Optional[str] = None
     is_prompt_injection: bool = False
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChatMessageList(BaseModel):

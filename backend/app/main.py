@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await broker.startup()
-    async_shared_broker.default_broker(broker)
+    # Skip broker startup in test environment
+    if os.getenv("TEST_ENV", "false").lower() != "true":
+        await broker.startup()
+        async_shared_broker.default_broker(broker)
 
     # Initialize database
     if os.getenv("TEST_ENV", "false").lower() != "true":
@@ -42,7 +44,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        await broker.shutdown()
+        if os.getenv("TEST_ENV", "false").lower() != "true":
+            await broker.shutdown()
 
 
 app = FastAPI(title="ML-Checker API", lifespan=lifespan)
